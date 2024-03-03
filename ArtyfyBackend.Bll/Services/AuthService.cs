@@ -10,7 +10,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System.CodeDom.Compiler;
 using System.Text;
 using static ArtyfyBackend.Core.Settings.EmailSettings;
 
@@ -41,12 +40,15 @@ namespace ArtyfyBackend.Bll.Services
 		/// <returns></returns>
 		public async Task<Response<UserAppModel>> RegisterAsync(RegisterModel registerModel)
 		{
+			var verificationCode = GenerateCode();
+
 			var user = new UserApp
 			{
 				Email = registerModel.Email,
 				FullName = registerModel.FullName,
 				PhoneNumber = registerModel.PhoneNumber,
-				UserName = registerModel.Email
+				UserName = registerModel.Email,
+				VerificationCode = verificationCode
 			};
 
 			var result = await _userManager.CreateAsync(user, registerModel.Password);
@@ -57,7 +59,14 @@ namespace ArtyfyBackend.Bll.Services
 
 				return Response<UserAppModel>.Fail(new ErrorModel(errors), 400);
 			}
-			//Create role?
+
+			_emailService.SendEmail(
+					_configuration[Settings.SenderEmail],
+					user.Email,
+					"Doğrulama Kodu",
+					"Doğrulama Kodunuz: " + verificationCode
+				);
+
 			return Response<UserAppModel>.Success(_mapper.Map<UserAppModel>(user), 200);
 		}
 
@@ -86,6 +95,10 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<TokenModel>.Success(token, 200);
 		}
 
+		/// <summary>
+		/// This method used for list all users
+		/// </summary>
+		/// <returns></returns>
 		public async Task<Response<List<UserAppModel>>> GetAllUsersAsync()
 		{
 			var users = await _userManager.Users.ToListAsync();
@@ -97,6 +110,11 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<List<UserAppModel>>.Success(_mapper.Map<List<UserAppModel>>(users), 200);
 		}
 
+		/// <summary>
+		/// This method used for get user by id
+		/// </summary>
+		/// <param name="userId"></param>
+		/// <returns></returns>
 		public async Task<Response<UserAppModel>> GetUserByIdAsync(string userId)
 		{
 			var user = await _userManager.FindByIdAsync(userId);
@@ -107,14 +125,21 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<UserAppModel>.Success(_mapper.Map<UserAppModel>(user), 200);
 		}
 
+		/// <summary>
+		/// This method used for send verification code to user's email
+		/// </summary>
+		/// <param name="userId"></param>
+		/// <returns></returns>
 		public async Task<Response<NoDataModel>> SendVerificationCode(string userId)
 		{
 			var user = await _userManager.FindByIdAsync(userId);
 			var verificationCode = GenerateCode();
 
+			//update user fields
 			user.VerificationCode = verificationCode;
 
 			var result = await _userManager.UpdateAsync(user);
+			//update user fields
 
 			if (result.Succeeded)
 			{
@@ -132,17 +157,48 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<NoDataModel>.Fail(new ErrorModel(errors), 400);
 		}
 
-		public Task<Response<NoDataModel>> ConfirmVerificationCode(ConfirmVerificationCodeModel confirmVerificationCodeModel)
+		/// <summary>
+		/// This method used for confirm verification code that sent to user's email
+		/// </summary>
+		/// <param name="confirmVerificationCodeModel"></param>
+		/// <returns></returns>
+		public async Task<Response<NoDataModel>> ConfirmVerificationCode(ConfirmVerificationCodeModel confirmVerificationCodeModel)
 		{
-			throw new NotImplementedException();
+			var user = await _userManager.FindByIdAsync(confirmVerificationCodeModel.UserId);
+
+			if (user is null)
+			{
+				return Response<NoDataModel>.Fail("User is not found!", 404, true);
+			}
+
+			if (user.VerificationCode != confirmVerificationCodeModel.VerificationCode)
+			{
+				return Response<NoDataModel>.Fail("Verification codes not match!", 400, true);
+			}
+
+			//Update user fields
+			user.VerificationCode = null;
+			user.EmailConfirmed = true;
+			//Update user fields
+
+			var result = await _userManager.UpdateAsync(user);
+
+			if (result.Succeeded)
+			{
+				_emailService.SendEmail(
+					_configuration[Settings.SenderEmail],
+					user.Email,
+					"Hesabınız Doğrulandı",
+					"Hesabınız başarıyla doğrulandı!"
+				);
+				return Response<NoDataModel>.Success("User is successfully verificated!", 200);
+			}
+
+			var errors = result.Errors.Select(e => e.Description).ToList();
+			return Response<NoDataModel>.Fail(new ErrorModel(errors), 400);
 		}
 
 		public Task<Response<NoDataModel>> ResetPasswordAsync(ResetPasswordModel resetPasswordModel)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<Response<NoDataModel>> SendVerificationCodeForResetPasswordAsync(string email)
 		{
 			throw new NotImplementedException();
 		}
@@ -152,21 +208,10 @@ namespace ArtyfyBackend.Bll.Services
 			throw new NotImplementedException();
 		}
 
-		public Task<Response<UserAppUpdateModel>> UpdateUserAsync(UserAppUpdateModel userAppUpdateModel)
-		{
-			throw new NotImplementedException();
-		}
-
-
-		public Task<Response<NoDataModel>> ConfirmVerificationCodeForResetPasswordAsync(ConfirmVerificationCodeResetPasswordModel model)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<Response<List<UserAppModel>>> GetUsersByRoleAsync(string role)
-		{
-			throw new NotImplementedException();
-		}
+		/// <summary>
+		/// This method used for generate random verification code 
+		/// </summary>
+		/// <returns></returns>
 		private static string GenerateCode()
 		{
 			Random random = new Random();

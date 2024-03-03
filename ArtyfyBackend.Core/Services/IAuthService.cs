@@ -10,12 +10,10 @@ namespace ArtyfyBackend.Core.Services
     public interface IAuthService
     {
         Task<Response<TokenModel>> LoginAsync(LoginModel loginModel);
+
         Task<Response<UserAppModel>> RegisterAsync(RegisterModel registerModel);
+
         Task<Response<UpdatePasswordModel>> UpdatePasswordAsync(UpdatePasswordModel updatePasswordModel);
-
-        Task<Response<NoDataModel>> SendVerificationCodeForResetPasswordAsync(string email);
-
-        Task<Response<NoDataModel>> ConfirmVerificationCodeForResetPasswordAsync(ConfirmVerificationCodeResetPasswordModel model);
 
         Task<Response<NoDataModel>> ResetPasswordAsync(ResetPasswordModel resetPasswordModel);
 
@@ -25,10 +23,6 @@ namespace ArtyfyBackend.Core.Services
 
         Task<Response<List<UserAppModel>>> GetAllUsersAsync();
 
-        Task<Response<List<UserAppModel>>> GetUsersByRoleAsync(string role);
-
         Task<Response<UserAppModel>> GetUserByIdAsync(string userId);
-
-        Task<Response<UserAppUpdateModel>> UpdateUserAsync(UserAppUpdateModel userAppUpdateModel);
     }
 }

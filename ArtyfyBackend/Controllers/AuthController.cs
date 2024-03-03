@@ -1,5 +1,6 @@
 ﻿using ArtyfyBackend.Core.Models.Login;
 using ArtyfyBackend.Core.Models.Register;
+using ArtyfyBackend.Core.Models.UserApp;
 using ArtyfyBackend.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,5 +41,17 @@ namespace ArtyfyBackend.API.Controllers
         {
             return CreateActionResult(await _authService.LoginAsync(loginModel));
         }
-    }
+
+		[HttpPost("sendVerificationCode/{userId}")]
+		public async Task<IActionResult> SendVerificationCode(string userId)
+		{
+			return CreateActionResult(await _authService.SendVerificationCode(userId));
+		}
+
+		[HttpPost("confirmVerificationCode")]
+		public async Task<IActionResult> ConfirmVerificationCode(ConfirmVerificationCodeModel model)
+		{
+			return CreateActionResult(await _authService.ConfirmVerificationCode(model));
+		}
+	}
 }
