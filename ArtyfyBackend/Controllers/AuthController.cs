@@ -53,5 +53,12 @@ namespace ArtyfyBackend.API.Controllers
 		{
 			return CreateActionResult(await _authService.ConfirmVerificationCode(model));
 		}
+
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+        {
+            return CreateActionResult(await _authService.ResetPasswordAsync(model));
+        }
+
 	}
 }

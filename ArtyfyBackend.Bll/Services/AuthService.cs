@@ -1,4 +1,5 @@
-﻿using ArtyfyBackend.Core.Models.Common;
+﻿using ArtyfyBackend.Bll.Constants;
+using ArtyfyBackend.Core.Models.Common;
 using ArtyfyBackend.Core.Models.Login;
 using ArtyfyBackend.Core.Models.Register;
 using ArtyfyBackend.Core.Models.Token;
@@ -198,9 +199,27 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<NoDataModel>.Fail(new ErrorModel(errors), 400);
 		}
 
-		public Task<Response<NoDataModel>> ResetPasswordAsync(ResetPasswordModel resetPasswordModel)
+		public async Task<Response<NoDataModel>> ResetPasswordAsync(ResetPasswordModel resetPasswordModel)
 		{
-			throw new NotImplementedException();
+			var user = await _userManager.FindByEmailAsync(resetPasswordModel.Email);
+
+			if (user is null)
+				return Response<NoDataModel>.Fail(Messages.USER_NOT_FOUND, 404, true);
+
+			if (resetPasswordModel.NewPasswordAgain != resetPasswordModel.NewPasswordAgain)
+			{
+				return Response<NoDataModel>.Fail(Messages.PASSWORDS_NOT_MATCH, 400, true);
+			}
+
+			var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+			var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordModel.NewPassword);
+
+			if (!result.Succeeded)
+			{
+				return Response<NoDataModel>.Fail(Messages.PASSWORD_UPDATE_ERROR, 400, true);
+			}
+
+			return Response<NoDataModel>.Success(200);
 		}
 
 		public Task<Response<UpdatePasswordModel>> UpdatePasswordAsync(UpdatePasswordModel updatePasswordModel)
