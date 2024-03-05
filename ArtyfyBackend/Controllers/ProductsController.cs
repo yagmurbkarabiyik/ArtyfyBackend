@@ -16,28 +16,11 @@ namespace ArtyfyBackend.API.Controllers
             _productService = productService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            return CreateActionResult(await _productService.GetAllAsync());
-        }
-
         [HttpPost]
         public async Task<IActionResult> AddProduct([FromQuery] ProductModel model)
         {
-            return CreateActionResult(await _productService.AddAsync(model));   
+            return CreateActionResult(await _productService.Create(model));   
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateProduct([FromQuery] ProductModel model, int id)
-        {
-            return CreateActionResult(await _productService.UpdateAsync(model,id));
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            return CreateActionResult(await _productService.RemoveAsync(id));
-        }
     }
 }

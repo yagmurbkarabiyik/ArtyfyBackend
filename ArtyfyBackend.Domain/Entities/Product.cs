@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ArtyfyBackend.Domain.Entities
+﻿namespace ArtyfyBackend.Domain.Entities
 {
     public class Product : BaseEntity
     {

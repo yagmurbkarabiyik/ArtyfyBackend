@@ -1,24 +1,48 @@
-﻿using ArtyfyBackend.Core.Models.Category;
-using ArtyfyBackend.Core.Models.Common;
+﻿using ArtyfyBackend.Core.Models.Common;
 using ArtyfyBackend.Core.Models.Product;
 using ArtyfyBackend.Core.Repositories;
 using ArtyfyBackend.Core.Responses;
 using ArtyfyBackend.Core.Services;
 using ArtyfyBackend.Core.UnitOfWork;
 using ArtyfyBackend.Domain.Entities;
-using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace ArtyfyBackend.Bll.Services
 {
-    public class ProductService : GenericService<Product, ProductModel>, IProductService
+    public class ProductService : IProductService
     {
-        public ProductService(IGenericRepository<Product> repository, IMapper mapper, IUnitOfWork unitOfWork) : base(repository, mapper, unitOfWork)
+        private readonly IProductRepository _productRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
+        private readonly UserManager<UserApp> _userManager;
+
+        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<UserApp> userManager)
         {
+            _productRepository = productRepository;
+            _unitOfWork = unitOfWork;
+            _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public Task<Response<NoDataModel>> Create(ProductModel model)
+        public async Task<Response<NoDataModel>> Create(ProductModel model)
         {
-            throw new NotImplementedException();
+            var product = new Product
+            {
+                ProductName = model.ProductName,
+                ProductDescription = model.ProductDescription,
+                Price = (double)model.Price,
+                Stock = (int)model.Stock,
+                IsSellable = model.IsSellable,
+                UserId = (int)model.UserId,
+                CategoryId = (int)model.CategoryId
+            };
+
+            _productRepository.AddAsync(product);
+
+            await _unitOfWork.CommitAsync();
+
+            return Response<NoDataModel>.Success("Yeni ürün oluşturuldu!", 200);
         }
     }
 }
