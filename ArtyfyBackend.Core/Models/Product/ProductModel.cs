@@ -8,7 +8,7 @@
         public double Price { get; set; }
         public bool IsSellable { get; set; }
 
-        public int? UserId { get; set; }
+        public string UserAppId { get; set; } = null!;
         public int? CategoryId { get; set; }
     }
 }

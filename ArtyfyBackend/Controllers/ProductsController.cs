@@ -17,7 +17,7 @@ namespace ArtyfyBackend.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddProduct([FromQuery] ProductModel model)
+        public async Task<IActionResult> AddProduct([FromBody] ProductModel model)
         {
             return CreateActionResult(await _productService.Create(model));   
         }

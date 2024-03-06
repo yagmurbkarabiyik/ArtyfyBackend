@@ -34,11 +34,12 @@ namespace ArtyfyBackend.Bll.Services
                 Price = (double)model.Price,
                 Stock = (int)model.Stock,
                 IsSellable = model.IsSellable,
-                UserId = (int)model.UserId,
-                CategoryId = (int)model.CategoryId
+                UserAppId = model.UserAppId,
+                CategoryId = (int)model.CategoryId,
+                
             };
-
-            _productRepository.AddAsync(product);
+            
+            await _productRepository.AddAsync(product);
 
             await _unitOfWork.CommitAsync();
 
