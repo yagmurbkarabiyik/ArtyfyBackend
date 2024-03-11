@@ -73,7 +73,6 @@ namespace ArtyfyBackend.Bll.Services
         {
             try
             {
-                // Kullanıcıyı bul
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
                 if (user == null)
                 {
@@ -86,10 +85,16 @@ namespace ArtyfyBackend.Bll.Services
                     return Response<NoDataModel>.Fail("Post not found!", 404, false);
                 }
 
-                if (post.LikeCount > 0)
+                bool alreadyLiked = await _context.Posts
+                    .Where(p => p.Id == postId && p.UserAppId == userId)
+                    .AnyAsync();
+
+                if (alreadyLiked)
                 {
                     return Response<NoDataModel>.Fail("You already liked this post!", 400, false);
                 }
+
+
 
                 post.LikeCount++;
 
