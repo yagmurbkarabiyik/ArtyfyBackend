@@ -1,6 +1,6 @@
 ﻿namespace ArtyfyBackend.Core.Models.Post
 {
-	public class PostCreateModel
+	public class PostModel
 	{
 		public string AppUserId { get; set; } = null!;
 		public string? Image { get; set; }

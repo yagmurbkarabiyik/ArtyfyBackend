@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ArtyfyBackend.Core\ArtyfyBackend.Core.csproj" />
+    <ProjectReference Include="..\ArtyfyBackend.Dal\ArtyfyBackend.Dal.csproj" />
   </ItemGroup>
 
 </Project>

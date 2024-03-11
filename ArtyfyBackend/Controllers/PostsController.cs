@@ -16,9 +16,17 @@ namespace ArtyfyBackend.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> CreatePost([FromBody] PostCreateModel model)
+		public async Task<IActionResult> CreatePost([FromBody] PostModel model)
 		{
 			return CreateActionResult(await _postService.Create(model));
+		}
+
+		[HttpGet("like")]
+		public async Task<IActionResult> Like(int postId, string userId)
+		{
+			var response = await _postService.LikePost(postId, userId);
+
+			return CreateActionResult(response);
 		}
 	}
 }

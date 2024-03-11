@@ -14,7 +14,7 @@ namespace ArtyfyBackend.Bll.Mapping
         {
             CreateMap<Category, CategoryModel>().ReverseMap();
             CreateMap<Comment, CommentModel>().ReverseMap();
-            CreateMap<Post, PostCreateModel>().ReverseMap();
+            CreateMap<Post, PostModel>().ReverseMap();
             CreateMap<Product, ProductModel>().ReverseMap();
             CreateMap<UserApp, UserAppModel>().ReverseMap();
         }
