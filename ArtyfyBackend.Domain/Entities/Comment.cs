@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ArtyfyBackend.Domain.Entities
+﻿namespace ArtyfyBackend.Domain.Entities
 {
     public class Comment : BaseEntity
     {
@@ -13,7 +7,8 @@ namespace ArtyfyBackend.Domain.Entities
         /// <summary>
         /// Relations
         /// </summary>
-        public int UserId { get; set; }
-        public UserApp UserApp { get; set; }
+        public string UserId { get; set; }
+        public UserApp? UserApp { get; set; }
+        public ICollection<SubComment> SubComments { get; set; }
     }
 }

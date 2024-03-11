@@ -4,6 +4,7 @@ using ArtyfyBackend.Dal.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtyfyBackend.Dal.Migrations
 {
     [DbContext(typeof(ArtyfyBackendDbContext))]
-    partial class ArtyfyBackendDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240311123922_SubCommentAdded")]
+    partial class SubCommentAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +69,8 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Property<string>("UserAppId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -181,9 +183,8 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -467,7 +468,7 @@ namespace ArtyfyBackend.Dal.Migrations
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
                 {
                     b.HasOne("ArtyfyBackend.Domain.Entities.Comment", "Comment")
-                        .WithMany("SubComments")
+                        .WithMany()
                         .HasForeignKey("CommentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -529,11 +530,6 @@ namespace ArtyfyBackend.Dal.Migrations
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
-                {
-                    b.Navigation("SubComments");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserApp", b =>
