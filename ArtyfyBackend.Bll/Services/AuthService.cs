@@ -222,10 +222,37 @@ namespace ArtyfyBackend.Bll.Services
 			return Response<NoDataModel>.Success(200);
 		}
 
-		public Task<Response<UpdatePasswordModel>> UpdatePasswordAsync(UpdatePasswordModel updatePasswordModel)
+		public async Task<Response<UpdatePasswordModel>> UpdatePasswordAsync(UpdatePasswordModel updatePasswordModel)
 		{
-			throw new NotImplementedException();
-		}
+            var user = await _userManager.FindByIdAsync(updatePasswordModel.UserId);
+
+            if (user is null)
+            {
+                return Response<UpdatePasswordModel>.Fail(Messages.USER_NOT_FOUND, 404, true);
+            }
+
+            var signInResult = await _userManager.CheckPasswordAsync(user, updatePasswordModel.CurrentPassword);
+
+            if (!signInResult)
+            {
+                return Response<UpdatePasswordModel>.Fail(Messages.CURRENT_PASSWORD_WRONG, 400, true);
+            }
+
+            if (updatePasswordModel.NewPassword != updatePasswordModel.NewPasswordAgain)
+            {
+                return Response<UpdatePasswordModel>.Fail(Messages.PASSWORDS_NOT_MATCH, 400, true);
+            }
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, updatePasswordModel.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                return Response<UpdatePasswordModel>.Fail(Messages.PASSWORD_UPDATE_ERROR, 400, true);
+            }
+
+            return Response<UpdatePasswordModel>.Success(200);
+        }
 
 		/// <summary>
 		/// This method used for generate random verification code 

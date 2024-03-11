@@ -60,5 +60,11 @@ namespace ArtyfyBackend.API.Controllers
             return CreateActionResult(await _authService.ResetPasswordAsync(model));
         }
 
-	}
+        [HttpPost("updatePassword")]
+        public async Task<IActionResult> UpdatePassword(UpdatePasswordModel updatePasswordModel)
+        {
+            return CreateActionResult(await _authService.UpdatePasswordAsync(updatePasswordModel));
+        }
+
+    }
 }

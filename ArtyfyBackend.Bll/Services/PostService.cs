@@ -25,6 +25,16 @@ namespace ArtyfyBackend.Bll.Services
             _context = context;
         }
 
+        /// <summary>
+        /// This method lists all posts
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Response<List<Post>>> GetAll()
+        {
+            var posts = await _context.Posts.ToListAsync();
+
+            return Response<List<Post>>.Success(posts, 200); ;
+        }
 
         /// <summary>
         /// This method used for create a post
@@ -94,8 +104,6 @@ namespace ArtyfyBackend.Bll.Services
                     return Response<NoDataModel>.Fail("You already liked this post!", 400, false);
                 }
 
-
-
                 post.LikeCount++;
 
                 _context.Posts.Update(post);
@@ -109,5 +117,6 @@ namespace ArtyfyBackend.Bll.Services
                 return Response<NoDataModel>.Fail("Something went wrong: " + ex.Message, 400, false);
             }
         }
+
     }
 }

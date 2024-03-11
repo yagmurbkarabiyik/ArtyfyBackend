@@ -1,6 +1,7 @@
 ﻿using ArtyfyBackend.Core.Models.Common;
 using ArtyfyBackend.Core.Models.Post;
 using ArtyfyBackend.Core.Responses;
+using ArtyfyBackend.Domain.Entities;
 
 namespace ArtyfyBackend.Core.IServices
 {
@@ -8,5 +9,6 @@ namespace ArtyfyBackend.Core.IServices
 	{
 		Task<Response<NoDataModel>> Create(PostModel model);
 		Task<Response<NoDataModel>> LikePost(int postId, string userId);
+        Task<Response<List<Post>>> GetAll();	
 	}
 }

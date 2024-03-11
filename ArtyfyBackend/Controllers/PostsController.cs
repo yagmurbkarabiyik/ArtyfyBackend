@@ -28,5 +28,12 @@ namespace ArtyfyBackend.API.Controllers
 
 			return CreateActionResult(response);
 		}
+
+		[HttpGet("getAll")]
+		public async Task<IActionResult> GetAll()
+		{
+			var response = await _postService.GetAll();
+			return CreateActionResult(response);
+		}
 	}
 }
