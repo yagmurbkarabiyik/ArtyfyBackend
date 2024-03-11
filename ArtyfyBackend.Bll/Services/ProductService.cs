@@ -5,6 +5,7 @@ using ArtyfyBackend.Core.Responses;
 using ArtyfyBackend.Core.Services;
 using ArtyfyBackend.Core.UnitOfWork;
 using ArtyfyBackend.Domain.Entities;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
@@ -16,13 +17,14 @@ namespace ArtyfyBackend.Bll.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly UserManager<UserApp> _userManager;
-
-        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<UserApp> userManager)
+        private readonly IMapper _mapper;
+        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<UserApp> userManager, IMapper mapper)
         {
             _productRepository = productRepository;
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _userManager = userManager;
+            _mapper = mapper;
         }
 
         public async Task<Response<NoDataModel>> Create(ProductModel model)
@@ -31,8 +33,8 @@ namespace ArtyfyBackend.Bll.Services
             {
                 ProductName = model.ProductName,
                 ProductDescription = model.ProductDescription,
-                Price = (double)model.Price,
-                Stock = (int)model.Stock,
+                Stock = model.Stock,
+                Price = model.Price,
                 IsSellable = model.IsSellable,
                 UserAppId = model.UserAppId,
                 CategoryId = (int)model.CategoryId,
@@ -44,6 +46,15 @@ namespace ArtyfyBackend.Bll.Services
             await _unitOfWork.CommitAsync();
 
             return Response<NoDataModel>.Success("Yeni ürün oluşturuldu!", 200);
+        }
+
+        public async Task<Response<List<ProductModel>>> ListSellableProduct()
+        {
+            var sellableProducts = await _productRepository.GetSellableProductsAsync();
+
+            var products = _mapper.Map<List<ProductModel>>(sellableProducts);
+
+            return Response<List<ProductModel>>.Success(products, 200);
         }
     }
 }
