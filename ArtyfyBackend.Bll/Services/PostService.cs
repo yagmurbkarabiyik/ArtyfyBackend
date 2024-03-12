@@ -32,7 +32,7 @@ namespace ArtyfyBackend.Bll.Services
         /// <summary>
         /// This method lists all posts
         /// </summary>
-        /// <returns></returns>
+       
         public async Task<Response<List<Post>>> GetAll()
         {
             var posts = await _context.Posts.ToListAsync();
@@ -93,24 +93,11 @@ namespace ArtyfyBackend.Bll.Services
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
                 if (user == null)
-                {
                     return Response<NoDataModel>.Fail("User not found!", 404, false);
-                }
-
+                
                 var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
                 if (post == null)
-                {
                     return Response<NoDataModel>.Fail("Post not found!", 404, false);
-                }
-
-                bool alreadyLiked = await _context.Posts
-                    .Where(p => p.Id == postId && p.UserAppId == userId)
-                    .AnyAsync();
-
-                if (alreadyLiked)
-                {
-                    return Response<NoDataModel>.Fail("You already liked this post!", 400, false);
-                }
 
                 post.LikeCount++;
 
@@ -123,9 +110,12 @@ namespace ArtyfyBackend.Bll.Services
             catch (Exception ex)
             {
                 return Response<NoDataModel>.Fail("Something went wrong: " + ex.Message, 400, false);
-            }
+            }   
         }
 
+        /// <summary>
+        /// This method listed all sellable products which shared by a user as a post.
+        /// </summary>
         public async Task<Response<List<PostModel>>> ListSellableProduct()
         {
             var sellableProducts = await _postRepository.GetSellableProductsAsync();
@@ -135,11 +125,32 @@ namespace ArtyfyBackend.Bll.Services
             return Response<List<PostModel>>.Success(products, 200);
         }
 
-        //public async Task<Response<Post>> SavePost(string userId, int postId)
-        //{
-        //    var user = await _context.Users.Include(u => u.SavedPost).FirstOrDefaultAsync(u => u.UserAppId == userId);
-        //    var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+        /// <summary>
+        /// This method used for save pos
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <param name="userId"></param>
+        public async Task<Response<List<PostModel>>> SavePost(int postId, string userId)
+        {
+           var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-        //}
+            var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
+
+            //var isPostSavedByUser = await _context.Posts
+            //    .AnyAsync(up => up.UserAppId == userId && up.Id == postId);
+
+            //if (isPostSavedByUser)
+            //{
+            //    return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
+            //}
+
+            post.SaveCount++;
+
+            _context.Posts.Update(post);
+
+            await _context.SaveChangesAsync();
+
+            return Response<List<PostModel>>.Success("Post saved!", 200);
+        }
     }
 }
