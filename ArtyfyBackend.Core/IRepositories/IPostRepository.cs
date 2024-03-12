@@ -5,6 +5,6 @@ namespace ArtyfyBackend.Core.Repositories
     public interface IPostRepository : IGenericRepository<Post>
     {
         public Task<List<Post>> Like(int id);
-        Task<List<Post>> GetSellableProductsAsync();
+        public Task<List<Post>> GetSellableProductsAsync();
     }
 }

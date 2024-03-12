@@ -62,12 +62,11 @@ namespace ArtyfyBackend.Bll.Services
                     Content = model.Content,
                     Image = model.Image ?? "",
                     LikeCount = model.LikeCount ?? 0,
-                    SaveCount = model.SaveCount,
+                    SaveCount = model.SaveCount ?? 0,
                     UserAppId = model.AppUserId,
                     IsSellable = model.IsSellable,
                     CategoryId = model.CategoryId,  
-                    CreatedDate = DateTime.Now,
-                    UpdatedDate = DateTime.Now
+                    CreatedDate = DateTime.Now
                 };
 
                 await _postRepository.AddAsync(post);
