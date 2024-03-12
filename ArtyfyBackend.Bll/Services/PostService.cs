@@ -37,7 +37,7 @@ namespace ArtyfyBackend.Bll.Services
         {
             var posts = await _context.Posts.ToListAsync();
 
-            return Response<List<Post>>.Success(posts, 200); ;
+            return Response<List<Post>>.Success(posts, 200); 
         }
 
         /// <summary>
@@ -126,15 +126,33 @@ namespace ArtyfyBackend.Bll.Services
         }
 
         /// <summary>
-        /// This method used for save pos
+        /// This method used for save post
         /// </summary>
         /// <param name="postId"></param>
         /// <param name="userId"></param>
         public async Task<Response<List<PostModel>>> SavePost(int postId, string userId)
         {
-           var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return Response<List<PostModel>>.Fail("User not found!", 404, false);
 
-            var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
+            var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+            if (post == null)
+                return Response<List<PostModel>>.Fail("Post not found!", 404, false);
+
+            var existingUserSavedPost = await _context.UserSavedPosts
+                .FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
+
+            if (existingUserSavedPost != null)
+                return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
+
+            var newUserSavedPost = new UserSavedPost
+            {
+                UserAppId = userId,
+                PostId = postId
+            };
+
+            _context.UserSavedPosts.Add(newUserSavedPost);
 
             post.SaveCount++;
 
@@ -145,26 +163,12 @@ namespace ArtyfyBackend.Bll.Services
             return Response<List<PostModel>>.Success("Post saved!", 200);
         }
 
-        public async Task<Response<List<PostModel>>> GetSavedPost(string userId)
+        public async Task<Response<List<UserSavedPost>>> GetSavedPost(string userId)
         {
-            try
-            {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-                if (user == null)
-                    return Response<List<PostModel>>.Fail("User not found!", 404, false);
+            var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
 
-                var savedPosts = await _context.Posts
-                    .Where(p => p.UserAppId == userId)
-                    .ToListAsync();
-
-                return Response<List<PostModel>>.Success("Saved posts retrieved successfully!", 200);
-            }
-            catch (Exception ex)
-            {
-                return Response<List<PostModel>>.Fail("Something went wrong: " + ex.Message, 400, false);
-            }
+            return Response<List<UserSavedPost>>.Success(posts, 200);
         }
     }
 }
-
 //todo save/like already saved/liked check problem
