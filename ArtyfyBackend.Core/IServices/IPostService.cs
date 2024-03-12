@@ -12,5 +12,6 @@ namespace ArtyfyBackend.Core.IServices
         Task<Response<List<PostModel>>> ListSellableProduct();
         Task<Response<List<Post>>> GetAll();
 		Task<Response<List<PostModel>>> SavePost(int postId, string userId);
+		Task<Response<List<PostModel>>> GetSavedPost(string userId);
 	}
 }

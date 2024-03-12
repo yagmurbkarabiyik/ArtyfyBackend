@@ -136,14 +136,6 @@ namespace ArtyfyBackend.Bll.Services
 
             var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
 
-            //var isPostSavedByUser = await _context.Posts
-            //    .AnyAsync(up => up.UserAppId == userId && up.Id == postId);
-
-            //if (isPostSavedByUser)
-            //{
-            //    return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
-            //}
-
             post.SaveCount++;
 
             _context.Posts.Update(post);
@@ -152,5 +144,27 @@ namespace ArtyfyBackend.Bll.Services
 
             return Response<List<PostModel>>.Success("Post saved!", 200);
         }
+
+        public async Task<Response<List<PostModel>>> GetSavedPost(string userId)
+        {
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null)
+                    return Response<List<PostModel>>.Fail("User not found!", 404, false);
+
+                var savedPosts = await _context.Posts
+                    .Where(p => p.UserAppId == userId)
+                    .ToListAsync();
+
+                return Response<List<PostModel>>.Success("Saved posts retrieved successfully!", 200);
+            }
+            catch (Exception ex)
+            {
+                return Response<List<PostModel>>.Fail("Something went wrong: " + ex.Message, 400, false);
+            }
+        }
     }
 }
+
+//todo save/like already saved/liked check problem

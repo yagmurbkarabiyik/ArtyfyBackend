@@ -53,5 +53,14 @@ namespace ArtyfyBackend.API.Controllers
 
 			return CreateActionResult(response);
 		}
+
+		[HttpGet("listSavedPosts")]
+		public async Task<IActionResult> ListSavedPost( string userId)
+		{
+			var response = await _postService.GetSavedPost(userId);
+
+			return CreateActionResult(response);
+
+		}
     }
 }
