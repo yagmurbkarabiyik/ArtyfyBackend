@@ -15,25 +15,25 @@ namespace ArtyfyBackend.API.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpGet]
+        [HttpGet("getAll")]
         public async Task<IActionResult> GetAll()
         {
             return CreateActionResult(await _categoryService.GetAllAsync());
         }
 
-        [HttpPost]
+        [HttpPost("create")]
         public async Task<IActionResult> AddCategory([FromQuery] CategoryModel model)
         {
             return CreateActionResult(await _categoryService.AddAsync(model));
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateCategory(int id, CategoryModel model)
         {
             return CreateActionResult(await _categoryService.UpdateAsync(model, id));
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             return CreateActionResult(await _categoryService.RemoveAsync(id));

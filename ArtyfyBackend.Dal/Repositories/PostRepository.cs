@@ -18,5 +18,9 @@ namespace ArtyfyBackend.Dal.Repositories
         {
             return await _context.Posts.Where(x => x.Id == id).ToListAsync();
         }
+        public async Task<List<Post>> GetSellableProductsAsync()
+        {
+            return await _context.Posts.Where(p => p.IsSellable == true).ToListAsync();
+        }
     }
 }

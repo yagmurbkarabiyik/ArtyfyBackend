@@ -7,6 +7,6 @@
         /// <summary>
         /// Relations
         /// </summary>
-        public List<Product> Products { get; set; }
+        public List<Post> Posts{ get; set; }
     }
 }

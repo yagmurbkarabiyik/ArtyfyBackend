@@ -5,7 +5,9 @@ using ArtyfyBackend.Core.Repositories;
 using ArtyfyBackend.Core.Responses;
 using ArtyfyBackend.Core.UnitOfWork;
 using ArtyfyBackend.Dal.Context;
+using ArtyfyBackend.Dal.Repositories;
 using ArtyfyBackend.Domain.Entities;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,12 +19,14 @@ namespace ArtyfyBackend.Bll.Services
         private readonly IPostRepository _postRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ArtyfyBackendDbContext _context;
-        public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context)
+        private readonly IMapper _mapper;
+        public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper)
         {
             _userManager = userManager;
             _postRepository = postRepository;
             _unitOfWork = unitOfWork;
             _context = context;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -54,9 +58,14 @@ namespace ArtyfyBackend.Bll.Services
 
                 var post = new Post
                 {
-                    UserAppId = model.AppUserId,
-                    Image = model.Image ?? "",
+                    Title = model.Title,
                     Content = model.Content,
+                    Image = model.Image ?? "",
+                    LikeCount = model.LikeCount ?? 0,
+                    SaveCount = model.SaveCount,
+                    UserAppId = model.AppUserId,
+                    IsSellable = model.IsSellable,
+                    CategoryId = model.CategoryId,  
                     CreatedDate = DateTime.Now,
                     UpdatedDate = DateTime.Now
                 };
@@ -118,5 +127,20 @@ namespace ArtyfyBackend.Bll.Services
             }
         }
 
+        public async Task<Response<List<PostModel>>> ListSellableProduct()
+        {
+            var sellableProducts = await _postRepository.GetSellableProductsAsync();
+
+            var products = _mapper.Map<List<PostModel>>(sellableProducts);
+
+            return Response<List<PostModel>>.Success(products, 200);
+        }
+
+        //public async Task<Response<Post>> SavePost(string userId, int postId)
+        //{
+        //    var user = await _context.Users.Include(u => u.SavedPost).FirstOrDefaultAsync(u => u.UserAppId == userId);
+        //    var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+
+        //}
     }
 }

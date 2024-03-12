@@ -4,6 +4,7 @@ using ArtyfyBackend.Dal.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtyfyBackend.Dal.Migrations
 {
     [DbContext(typeof(ArtyfyBackendDbContext))]
-    partial class ArtyfyBackendDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240311135855_SaveCountAddedToPosts")]
+    partial class SaveCountAddedToPosts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -85,9 +88,6 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -96,20 +96,59 @@ namespace ArtyfyBackend.Dal.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Image")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LikeCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SaveCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAppId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserAppId");
+
+                    b.ToTable("Posts");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsSellable")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("LikeCount")
-                        .HasColumnType("int");
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
 
-                    b.Property<int?>("SaveCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
+                    b.Property<string>("ProductDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -124,7 +163,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
@@ -403,12 +442,25 @@ namespace ArtyfyBackend.Dal.Migrations
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
                 {
-                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", "Category")
-                        .WithMany("Posts")
-                        .HasForeignKey("CategoryId");
-
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Posts")
+                        .HasForeignKey("UserAppId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserApp");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
+                        .WithMany("Products")
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -482,7 +534,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Category", b =>
                 {
-                    b.Navigation("Posts");
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
@@ -495,6 +547,8 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Posts");
+
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

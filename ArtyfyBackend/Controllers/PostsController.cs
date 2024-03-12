@@ -15,7 +15,7 @@ namespace ArtyfyBackend.API.Controllers
 			_postService = postService;
 		}
 
-		[HttpPost]
+		[HttpPost("create")]
 		public async Task<IActionResult> CreatePost([FromBody] PostModel model)
 		{
 			return CreateActionResult(await _postService.Create(model));
@@ -35,5 +35,14 @@ namespace ArtyfyBackend.API.Controllers
 			var response = await _postService.GetAll();
 			return CreateActionResult(response);
 		}
-	}
+
+        /// <summary>
+        /// This method listed sellable products to show our market.
+        /// </summary>
+        [HttpGet("getSellableProducts")]
+        public async Task<IActionResult> GetSellableProducts()
+        {
+            return CreateActionResult(await _postService.ListSellableProduct());
+        }
+    }
 }

@@ -31,7 +31,7 @@ namespace ArtyfyBackend.API.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost("add")]
+        [HttpPost("addSubComment")]
         public async Task<IActionResult> Add(SubCommentModel model)
         {
             return CreateActionResult(await _subCommentService.AddAsync(model));

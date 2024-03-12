@@ -16,6 +16,5 @@ namespace ArtyfyBackend.Domain.Entities
         /// </summary>
         public List<Post> Posts { get; set; }
         public List<Comment> Comments { get; set; }
-        public List<Product> Products { get; set; }
     }
 }

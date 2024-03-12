@@ -21,7 +21,6 @@ namespace ArtyfyBackend.Dal.Context
 
         }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<Product> Products { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<SubComment> SubComments { get; set; }
