@@ -60,7 +60,13 @@ namespace ArtyfyBackend.API.Controllers
 			var response = await _postService.GetSavedPost(userId);
 
 			return CreateActionResult(response);
+		}
 
+		[HttpGet("trendPosts")]
+		public async Task<IActionResult> TrendPosts()
+		{
+			var response = await _postService.TrendPosts();	
+			return CreateActionResult(response);
 		}
     }
 }

@@ -163,11 +163,29 @@ namespace ArtyfyBackend.Bll.Services
             return Response<List<PostModel>>.Success("Post saved!", 200);
         }
 
+        /// <summary>
+        /// This method listed saved posts by user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         public async Task<Response<List<UserSavedPost>>> GetSavedPost(string userId)
         {
             var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
 
             return Response<List<UserSavedPost>>.Success(posts, 200);
+        }
+
+        /// <summary>
+        /// This method used for trend page. It shows us post which have the most like count
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Response<List<Post>>> TrendPosts()
+        {
+            var trendingPosts = await _context.Posts
+           .OrderByDescending(p => p.LikeCount)
+           .ToListAsync();
+
+            return Response<List<Post>>.Success(trendingPosts, 200);
         }
     }
 }
