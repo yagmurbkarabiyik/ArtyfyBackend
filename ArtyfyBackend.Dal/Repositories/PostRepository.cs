@@ -41,5 +41,16 @@ namespace ArtyfyBackend.Dal.Repositories
         {
             return await _context.Posts.Where(x => x.Id == postId).ToListAsync();
         }
+
+
+        /// <summary>
+        /// This method used for like posts.
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <returns></returns>
+        public async Task<List<Post>> LikePost(int postId)
+        {
+            return await _context.Posts.Where(x => x.Id == postId).ToListAsync();
+        }
     }
 }

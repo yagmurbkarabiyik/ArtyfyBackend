@@ -62,7 +62,15 @@ namespace ArtyfyBackend.API.Controllers
 			return CreateActionResult(response);
 		}
 
-		[HttpGet("trendPosts")]
+		[HttpGet("listLikedPosts")]
+		public async Task<IActionResult> ListLikedPost(string userId)
+		{
+			var response = await _postService.GetLikedPost(userId);
+
+            return CreateActionResult(response);
+        }
+
+        [HttpGet("trendPosts")]
 		public async Task<IActionResult> TrendPosts()
 		{
 			var response = await _postService.TrendPosts();	

@@ -32,7 +32,6 @@ namespace ArtyfyBackend.Bll.Services
         /// <summary>
         /// This method lists all posts
         /// </summary>
-       
         public async Task<Response<List<Post>>> GetAll()
         {
             var posts = await _context.Posts.ToListAsync();
@@ -87,30 +86,33 @@ namespace ArtyfyBackend.Bll.Services
         /// <param name="postId"></param>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public async Task<Response<NoDataModel>> LikePost(int postId, string userId)
+        public async Task<Response<PostModel>> LikePost(int postId, string userId)
         {
-            try
+            var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+            if (post == null)
+                return Response<PostModel>.Fail("Post not found!", 404, false);
+
+            var existingUserLikedPost = await _context.UserSavedPosts
+                .FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
+
+            if (existingUserLikedPost != null)
+                return Response<PostModel>.Fail("Post already liked by the user!", 400, false);
+
+            var newUserLikedPost = new UserLikedPost
             {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-                if (user == null)
-                    return Response<NoDataModel>.Fail("User not found!", 404, false);
-                
-                var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
-                if (post == null)
-                    return Response<NoDataModel>.Fail("Post not found!", 404, false);
+                UserAppId = userId,
+                PostId = postId
+            };
 
-                post.LikeCount++;
+            _context.UserLikedPosts.Add(newUserLikedPost);
 
-                _context.Posts.Update(post);
+            post.LikeCount++;
 
-                await _context.SaveChangesAsync();
+            _context.Posts.Update(post);
 
-                return Response<NoDataModel>.Success("Post liked!", 200);
-            }
-            catch (Exception ex)
-            {
-                return Response<NoDataModel>.Fail("Something went wrong: " + ex.Message, 400, false);
-            }   
+            await _context.SaveChangesAsync();
+
+            return Response<PostModel>.Success("Post liked!", 200);
         }
 
         /// <summary>
@@ -173,6 +175,18 @@ namespace ArtyfyBackend.Bll.Services
             var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
 
             return Response<List<UserSavedPost>>.Success(posts, 200);
+        }
+
+        /// <summary>
+        /// This method listed liked posts by user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<Response<List<UserLikedPost>>> GetLikedPost(string userId)
+        {
+            var posts = await _context.UserLikedPosts.Where(x => x.UserAppId == userId).ToListAsync();
+
+            return Response<List<UserLikedPost>>.Success(posts, 200);
         }
 
         /// <summary>
