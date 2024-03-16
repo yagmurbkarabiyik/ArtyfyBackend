@@ -15,7 +15,7 @@ namespace ArtyfyBackend.API.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpGet("getAll")]
+        [HttpGet("list")]
         public async Task<IActionResult> GetAll()
         {
             return CreateActionResult(await _categoryService.GetAllAsync());

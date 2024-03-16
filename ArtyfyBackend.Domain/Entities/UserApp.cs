@@ -18,3 +18,5 @@ namespace ArtyfyBackend.Domain.Entities
         public List<Comment> Comments { get; set; }
     }
 }
+
+//todo name/surname, user name will be added
