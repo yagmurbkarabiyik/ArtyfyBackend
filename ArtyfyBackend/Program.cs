@@ -10,14 +10,14 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ArtyfyBackend.Bll.Services;
 using ArtyfyBackend.API.Extensions;
+using ArtyfyBackend.API.Middlewares;
+using Peticom.WebAPI.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
-// Add services to the container.
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -30,10 +30,9 @@ builder.Services.AddDbContext<ArtyfyBackendDbContext>(x =>
     });
 });
 
-//Token Options integration
 builder.Services.Configure<TokenSettings>(builder.Configuration.GetSection("TokenOptions"));
 
-//Authentication ve token implementasyonu
+//Authentication and token implementation
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -55,32 +54,29 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-//Identity implementasyonu
 builder.Services.AddIdentity();
 
-//Automapper implemantasyonu
 builder.Services.AddAutoMapper(typeof(MapProfile));
 
-//Autofac implemantasyonu
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterModule(new RepositoryServiceModule()));
 
-//swagger api key implementasyonu
 builder.Services.AddSwaggerAuthorization();
 
 var app = builder.Build(); ;
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+ app.UseSwagger();
+
+ app.UseSwaggerUI();
 
 app.UseCors("MyAllowedOrigins");
 
+app.UseMiddleware<ApiKeyAuthorizationMiddleware>();
+
 app.UseHttpsRedirection();
+
+app.UseCustomExceptionHandler();
 
 app.UseAuthentication();
 

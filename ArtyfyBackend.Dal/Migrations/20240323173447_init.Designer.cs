@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtyfyBackend.Dal.Migrations
 {
     [DbContext(typeof(ArtyfyBackendDbContext))]
-    [Migration("20240306182558_mig_3")]
-    partial class mig_3
+    [Migration("20240323173447_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,11 +67,11 @@ namespace ArtyfyBackend.Dal.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserAppId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -88,6 +88,9 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -96,11 +99,20 @@ namespace ArtyfyBackend.Dal.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("LikeCount")
+                    b.Property<bool>("IsSellable")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LikeCount")
                         .HasColumnType("int");
+
+                    b.Property<int?>("SaveCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -111,12 +123,14 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("UserAppId");
 
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Product", b =>
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -124,27 +138,42 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int>("CommentId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsSellable")
-                        .HasColumnType("bit");
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
-
-                    b.Property<string>("ProductDescription")
+                    b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
 
-                    b.Property<int>("Stock")
+                    b.HasIndex("CommentId");
+
+                    b.ToTable("SubComments");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -154,29 +183,43 @@ namespace ArtyfyBackend.Dal.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("PostId");
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("Products");
+                    b.ToTable("UserLikedPosts");
                 });
 
-            modelBuilder.Entity("CategoryProduct", b =>
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserSavedPost", b =>
                 {
-                    b.Property<int>("CategoriesId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductsId")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
 
-                    b.HasKey("CategoriesId", "ProductsId");
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("ProductsId");
+                    b.Property<string>("UserAppId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.ToTable("CategoryProduct");
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserAppId");
+
+                    b.ToTable("UserSavedPosts");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -416,48 +459,71 @@ namespace ArtyfyBackend.Dal.Migrations
                 {
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Comments")
-                        .HasForeignKey("UserAppId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserAppId");
 
                     b.Navigation("UserApp");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
                 {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", "Category")
+                        .WithMany("Posts")
+                        .HasForeignKey("CategoryId");
+
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Posts")
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Category");
+
                     b.Navigation("UserApp");
                 });
 
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Product", b =>
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
                 {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Comment", "Comment")
+                        .WithMany("SubComments")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comment");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
+                {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId");
+
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
-                        .WithMany("Products")
+                        .WithMany()
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Post");
+
                     b.Navigation("UserApp");
                 });
 
-            modelBuilder.Entity("CategoryProduct", b =>
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserSavedPost", b =>
                 {
-                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", null)
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
                         .WithMany()
-                        .HasForeignKey("CategoriesId")
+                        .HasForeignKey("PostId");
+
+                    b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
+                        .WithMany()
+                        .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ArtyfyBackend.Domain.Entities.Product", null)
-                        .WithMany()
-                        .HasForeignKey("ProductsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Post");
+
+                    b.Navigation("UserApp");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -511,13 +577,21 @@ namespace ArtyfyBackend.Dal.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
+                {
+                    b.Navigation("SubComments");
+                });
+
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserApp", b =>
                 {
                     b.Navigation("Comments");
 
                     b.Navigation("Posts");
-
-                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

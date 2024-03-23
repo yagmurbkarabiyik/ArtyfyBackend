@@ -11,10 +11,6 @@ namespace ArtyfyBackend.Dal.Context
 
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("server=YAGMUR;database=ArtyfyBackendDb;integrated security=true;TrustServerCertificate=true");
-        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
