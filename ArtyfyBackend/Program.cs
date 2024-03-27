@@ -63,7 +63,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterModule(new RepositoryServiceModule()));
 
 builder.Services.AddSwaggerAuthorization();
-
+builder.Services.AddCors(x => x.AddDefaultPolicy(xx => xx.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 var app = builder.Build(); ;
 
  app.UseSwagger();
