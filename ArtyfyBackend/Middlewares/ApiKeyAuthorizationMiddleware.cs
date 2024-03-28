@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Primitives;
 
-namespace Peticom.WebAPI.Middlewares;
+namespace Artyfy.WebAPI.Middlewares;
 
 public class ApiKeyAuthorizationMiddleware
 {

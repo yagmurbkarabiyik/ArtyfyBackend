@@ -24,5 +24,7 @@ namespace ArtyfyBackend.Core.Services
         Task<Response<List<UserAppModel>>> GetAllUsersAsync();
 
         Task<Response<UserAppModel>> GetUserByIdAsync(string userId);
+
+        Task<Response<UserAppModel>> UpdateUserAsync(UserAppUpdateModel updateModel);
     }
 }

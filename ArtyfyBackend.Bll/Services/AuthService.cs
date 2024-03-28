@@ -43,12 +43,20 @@ namespace ArtyfyBackend.Bll.Services
 		{
 			var verificationCode = GenerateCode();
 
+			var userName = registerModel.Email.Split('@')[0];
+
+			if (await _userManager.FindByNameAsync(userName) != null)
+			{
+				var random = new Random();
+				userName = $"{userName}{random.Next(1000)}";
+			}
+
 			var user = new UserApp
 			{
 				Email = registerModel.Email,
 				FullName = registerModel.FullName,
 				PhoneNumber = registerModel.PhoneNumber,
-				UserName = registerModel.Email,
+				UserName = userName, 
 				VerificationCode = verificationCode
 			};
 
@@ -86,9 +94,7 @@ namespace ArtyfyBackend.Bll.Services
 			if (user == null) return Response<TokenModel>.Fail("User not found", 404, true);
 
 			if (!await _userManager.CheckPasswordAsync(user, loginModel.Password))
-			{
 				return Response<TokenModel>.Fail("Wrong password", 400, true);
-			}
 
 			var userRoles = await _userManager.GetRolesAsync(user);
 			var token = _tokenService.CreateToken(user, userRoles);
@@ -104,9 +110,7 @@ namespace ArtyfyBackend.Bll.Services
 		{
 			var users = await _userManager.Users.ToListAsync();
 			if (users.Count == 0)
-			{
 				return Response<List<UserAppModel>>.Fail("Users not found.", 404, true);
-			}
 
 			return Response<List<UserAppModel>>.Success(_mapper.Map<List<UserAppModel>>(users), 200);
 		}
@@ -119,10 +123,10 @@ namespace ArtyfyBackend.Bll.Services
 		public async Task<Response<UserAppModel>> GetUserByIdAsync(string userId)
 		{
 			var user = await _userManager.FindByIdAsync(userId);
+
 			if (user is null)
-			{
 				return Response<UserAppModel>.Fail("User is not found.", 404, true);
-			}
+		
 			return Response<UserAppModel>.Success(_mapper.Map<UserAppModel>(user), 200);
 		}
 
@@ -168,19 +172,13 @@ namespace ArtyfyBackend.Bll.Services
 			var user = await _userManager.FindByIdAsync(confirmVerificationCodeModel.UserId);
 
 			if (user is null)
-			{
 				return Response<NoDataModel>.Fail("User is not found!", 404, true);
-			}
-
+			
 			if (user.VerificationCode != confirmVerificationCodeModel.VerificationCode)
-			{
 				return Response<NoDataModel>.Fail("Verification codes not match!", 400, true);
-			}
 
-			//Update user fields
 			user.VerificationCode = null;
 			user.EmailConfirmed = true;
-			//Update user fields
 
 			var result = await _userManager.UpdateAsync(user);
 
@@ -207,19 +205,39 @@ namespace ArtyfyBackend.Bll.Services
 				return Response<NoDataModel>.Fail(Messages.USER_NOT_FOUND, 404, true);
 
 			if (resetPasswordModel.NewPasswordAgain != resetPasswordModel.NewPasswordAgain)
-			{
 				return Response<NoDataModel>.Fail(Messages.PASSWORDS_NOT_MATCH, 400, true);
-			}
 
 			var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
 			var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordModel.NewPassword);
+
+			if (!result.Succeeded)	return Response<NoDataModel>.Fail(Messages.PASSWORD_UPDATE_ERROR, 400, true);
+
+			return Response<NoDataModel>.Success(200);
+		}
+
+		public async Task<Response<UserAppModel>> UpdateUserAsync(UserAppUpdateModel model)
+		{
+			var user = await _userManager.FindByIdAsync(model.Id);
+
+			if (user is null)
+				return Response<UserAppModel>.Fail(Messages.USER_NOT_FOUND, 404, true);
+
+			user.PhoneNumber = model.PhoneNumber;
+			user.BirthDate = model.BirthDate;
+			user.City = model.City;
+			user.FullName = model.FullName;
+			user.Email = model.Email;
+
+			var result = await _userManager.UpdateAsync(user);
 
 			if (!result.Succeeded)
 			{
-				return Response<NoDataModel>.Fail(Messages.PASSWORD_UPDATE_ERROR, 400, true);
+				var errors = result.Errors.Select(e => e.Description).ToList();
+				return Response<UserAppModel>.Fail(new ErrorModel(errors), 400);
 			}
 
-			return Response<NoDataModel>.Success(200);
+			return Response<UserAppModel>.Success(_mapper.Map<UserAppModel>(user), 200);
 		}
 
 		public async Task<Response<UpdatePasswordModel>> UpdatePasswordAsync(UpdatePasswordModel updatePasswordModel)
@@ -227,29 +245,21 @@ namespace ArtyfyBackend.Bll.Services
             var user = await _userManager.FindByIdAsync(updatePasswordModel.UserId);
 
             if (user is null)
-            {
                 return Response<UpdatePasswordModel>.Fail(Messages.USER_NOT_FOUND, 404, true);
-            }
 
             var signInResult = await _userManager.CheckPasswordAsync(user, updatePasswordModel.CurrentPassword);
 
             if (!signInResult)
-            {
                 return Response<UpdatePasswordModel>.Fail(Messages.CURRENT_PASSWORD_WRONG, 400, true);
-            }
 
             if (updatePasswordModel.NewPassword != updatePasswordModel.NewPasswordAgain)
-            {
                 return Response<UpdatePasswordModel>.Fail(Messages.PASSWORDS_NOT_MATCH, 400, true);
-            }
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, resetToken, updatePasswordModel.NewPassword);
 
             if (!result.Succeeded)
-            {
                 return Response<UpdatePasswordModel>.Fail(Messages.PASSWORD_UPDATE_ERROR, 400, true);
-            }
 
             return Response<UpdatePasswordModel>.Success(200);
         }
@@ -272,5 +282,4 @@ namespace ArtyfyBackend.Bll.Services
 			return codeBuilder.ToString();
 		}
 	}
-
 }

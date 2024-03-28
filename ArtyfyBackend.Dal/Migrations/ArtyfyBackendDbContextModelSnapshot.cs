@@ -42,7 +42,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
@@ -74,7 +74,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
@@ -124,7 +124,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
@@ -156,7 +156,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("CommentId");
 
-                    b.ToTable("SubComments");
+                    b.ToTable("SubComments", (string)null);
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
@@ -186,7 +186,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("UserLikedPosts");
+                    b.ToTable("UserLikedPosts", (string)null);
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserSavedPost", b =>
@@ -216,7 +216,7 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasIndex("UserAppId");
 
-                    b.ToTable("UserSavedPosts");
+                    b.ToTable("UserSavedPosts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

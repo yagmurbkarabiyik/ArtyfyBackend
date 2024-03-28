@@ -11,7 +11,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ArtyfyBackend.Bll.Services;
 using ArtyfyBackend.API.Extensions;
 using ArtyfyBackend.API.Middlewares;
-using Peticom.WebAPI.Middlewares;
+using Artyfy.WebAPI.Middlewares;
+using Artyfy.WebAPI.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,20 +64,24 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterModule(new RepositoryServiceModule()));
 
 builder.Services.AddSwaggerAuthorization();
-builder.Services.AddCors(x => x.AddDefaultPolicy(xx => xx.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+
+builder.Services.UseCors();
+
 var app = builder.Build(); ;
 
- app.UseSwagger();
+app.UseSwagger();
 
- app.UseSwaggerUI();
-
-app.UseCors("MyAllowedOrigins");
+app.UseSwaggerUI();
 
 app.UseMiddleware<ApiKeyAuthorizationMiddleware>();
 
 app.UseHttpsRedirection();
 
 app.UseCustomExceptionHandler();
+
+app.UseRouting();
+
+app.UseCors("MyAllowedOrigins");
 
 app.UseAuthentication();
 
