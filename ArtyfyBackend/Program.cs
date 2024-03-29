@@ -73,6 +73,8 @@ app.UseSwagger();
 
 app.UseSwaggerUI();
 
+app.UseCors("MyAllowedOrigins");
+
 app.UseMiddleware<ApiKeyAuthorizationMiddleware>();
 
 app.UseHttpsRedirection();
@@ -80,8 +82,6 @@ app.UseHttpsRedirection();
 app.UseCustomExceptionHandler();
 
 app.UseRouting();
-
-app.UseCors("MyAllowedOrigins");
 
 app.UseAuthentication();
 
