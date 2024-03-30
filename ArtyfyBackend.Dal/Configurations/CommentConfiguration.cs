@@ -12,7 +12,6 @@ namespace ArtyfyBackend.Dal.Configurations
             builder.Property(p => p.Id).HasDefaultValueSql("NEWID()").ValueGeneratedOnAdd();
             builder.Property(p => p.UserId).IsRequired();
             builder.Property(p => p.Content).IsRequired().HasMaxLength(500);
-
         }
     }
 }

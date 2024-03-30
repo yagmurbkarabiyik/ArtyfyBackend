@@ -1,5 +1,4 @@
-﻿
-namespace ArtyfyBackend.Domain.Token
+﻿namespace ArtyfyBackend.Domain.Token
 {
     public class TokenSettings
     {
