@@ -29,6 +29,13 @@ namespace ArtyfyBackend.API.Controllers
 			return CreateActionResult(await _postService.Create(model));
 		}
 
+		[HttpGet("postDetail")]
+		public async Task<IActionResult> PostDetail([FromQuery] int postId)
+		{
+			var response = await _postService.PostDetail(postId);	
+			return CreateActionResult(response);	
+		}
+
 		[HttpGet("like")]
 		public async Task<IActionResult> Like(int postId, string userId)
 		{
@@ -37,9 +44,6 @@ namespace ArtyfyBackend.API.Controllers
 			return CreateActionResult(response);
 		}
 
-        /// <summary>
-        /// This method listed sellable products to show our market.
-        /// </summary>
         [HttpGet("getSellableProducts")]
         public async Task<IActionResult> GetSellableProducts()
         {

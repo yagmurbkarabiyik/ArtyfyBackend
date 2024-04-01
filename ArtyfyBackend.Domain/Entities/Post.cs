@@ -16,8 +16,6 @@ namespace ArtyfyBackend.Domain.Entities
         /// Relations
         /// </summary>
         public string UserAppId { get; set; } = null!;
-		public  UserApp UserApp { get; set; }
         public int? CategoryId { get; set; }
-        public Category Category { get; set; }
     }
 }

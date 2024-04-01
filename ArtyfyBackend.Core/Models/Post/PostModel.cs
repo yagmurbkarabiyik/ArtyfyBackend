@@ -10,5 +10,6 @@
 		public bool IsSellable { get; set; }
 		public string AppUserId { get; set; } = null!;
 		public int? CategoryId { get; set; }
+		public int PostId { get; set; } 
 	}
 }

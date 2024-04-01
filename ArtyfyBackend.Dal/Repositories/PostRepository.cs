@@ -51,5 +51,5 @@ namespace ArtyfyBackend.Dal.Repositories
         {
             return await _context.Posts.Where(x => x.Id == postId).ToListAsync();
         }
-    }
+	}
 }
