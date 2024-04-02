@@ -8,7 +8,6 @@
 		public string City { get; set; } = null!;
 		public string? UserName { get; set; }
         public string PhoneNumber { get; set; } = null!;
-		public DateTime? BirthDate { get; set; }
         public string? ImageUrl { get; set; }
     }
 }
