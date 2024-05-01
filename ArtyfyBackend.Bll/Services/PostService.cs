@@ -50,7 +50,7 @@ namespace ArtyfyBackend.Bll.Services
 		/// </summary>
 		/// <param name="model"></param>
 		/// <returns></returns>
-		public async Task<Response<NoDataModel>> Create(PostModel model)
+		public async Task<Response<NoDataModel>> Create(PostCreateModel model)
 		{
 			try
 			{
@@ -66,10 +66,8 @@ namespace ArtyfyBackend.Bll.Services
 					Title = model.Title,
 					Content = model.Content,
 					Image = model.Image ?? "",
-					LikeCount = model.LikeCount ?? 0,
-					SaveCount = model.SaveCount ?? 0,
-					UserAppId = model.AppUserId,
 					IsSellable = model.IsSellable,
+					UserAppId = model.AppUserId,
 					CategoryId = model.CategoryId,
 					CreatedDate = DateTime.Now
 				};
@@ -107,31 +105,124 @@ namespace ArtyfyBackend.Bll.Services
 		/// <returns></returns>
 		public async Task<Response<PostModel>> LikePost(int postId, string userId)
 		{
-			var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-			if (post == null)
-				return Response<PostModel>.Fail("Post not found!", 404, false);
+			var isPostLiked = await _userLikedPostRepository
+				.Queryable()
+				.AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-			var existingUserLikedPost = await _context.UserSavedPosts
-				.FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
-
-			if (existingUserLikedPost != null)
-				return Response<PostModel>.Fail("Post already liked by the user!", 400, false);
-
-			var newUserLikedPost = new UserLikedPost
+			if (!isPostLiked)
 			{
-				UserAppId = userId,
-				PostId = postId
-			};
+				var newUserLikedPost = new UserLikedPost
+				{
+					UserAppId = userId,
+					PostId = postId
+				};
 
-			_context.UserLikedPosts.Add(newUserLikedPost);
+				_userLikedPostRepository.AddAsync(newUserLikedPost);
 
-			post.LikeCount++;
+				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+				if (post != null)
+				{
+					post.LikeCount++;
+					_context.Posts.Update(post);
+				}
+			}
+			else
+			{
+				var likedPost = await _userLikedPostRepository
+					.Queryable()
+					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-			_context.Posts.Update(post);
+				_userLikedPostRepository.Remove(likedPost);
+
+				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+				if (post != null && post.LikeCount > 0)
+				{
+					post.LikeCount--;
+					_context.Posts.Update(post);
+				}
+			}
 
 			await _context.SaveChangesAsync();
 
-			return Response<PostModel>.Success("Post liked!", 200);
+			return Response<PostModel>.Success(200);
+		}
+
+		/// <summary>
+		/// This method used for save post
+		/// </summary>
+		/// <param name="postId"></param>
+		/// <param name="userId"></param>
+		public async Task<Response<List<PostModel>>> SavePost(int postId, string userId)
+		{
+			var isPostSaved = await _userSavedPostRepository
+				.Queryable()
+				.AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
+
+			if (!isPostSaved)
+			{
+				var newUserSavedPost = new UserSavedPost
+				{
+					UserAppId = userId,
+					PostId = postId
+				};
+
+				_userSavedPostRepository.AddAsync(newUserSavedPost);
+
+				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+				if (post != null)
+				{
+					post.SaveCount++;
+					_context.Posts.Update(post);
+				}
+			}
+			else
+			{
+				var savedPost = await _userSavedPostRepository
+					.Queryable()
+					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
+
+				_userSavedPostRepository.Remove(savedPost);
+
+				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+				if (post != null && post.SaveCount > 0)
+				{
+					post.SaveCount--;
+					_context.Posts.Update(post);
+				}
+			}
+			await _context.SaveChangesAsync();
+
+			return Response<List<PostModel>>.Success("Post saved!", 200);
+
+			//var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+			//if (user == null)
+			//	return Response<List<PostModel>>.Fail("User not found!", 404, false);
+
+			//var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+			//if (post == null)
+			//	return Response<List<PostModel>>.Fail("Post not found!", 404, false);
+
+			//var existingUserSavedPost = await _context.UserSavedPosts
+			//	.FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
+
+			//if (existingUserSavedPost != null)
+			//	return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
+
+			//var newUserSavedPost = new UserSavedPost
+			//{
+			//	UserAppId = userId,
+			//	PostId = postId
+			//};
+
+			//_context.UserSavedPosts.Add(newUserSavedPost);
+
+			//post.SaveCount++;
+
+			//_context.Posts.Update(post);
+
+			//await _context.SaveChangesAsync();
+
+			//return Response<List<PostModel>>.Success("Post saved!", 200);
 		}
 
 		/// <summary>
@@ -144,44 +235,6 @@ namespace ArtyfyBackend.Bll.Services
 			var products = _mapper.Map<List<PostModel>>(sellableProducts);
 
 			return Response<List<PostModel>>.Success(products, 200);
-		}
-
-		/// <summary>
-		/// This method used for save post
-		/// </summary>
-		/// <param name="postId"></param>
-		/// <param name="userId"></param>
-		public async Task<Response<List<PostModel>>> SavePost(int postId, string userId)
-		{
-			var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-			if (user == null)
-				return Response<List<PostModel>>.Fail("User not found!", 404, false);
-
-			var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-			if (post == null)
-				return Response<List<PostModel>>.Fail("Post not found!", 404, false);
-
-			var existingUserSavedPost = await _context.UserSavedPosts
-				.FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
-
-			if (existingUserSavedPost != null)
-				return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
-
-			var newUserSavedPost = new UserSavedPost
-			{
-				UserAppId = userId,
-				PostId = postId
-			};
-
-			_context.UserSavedPosts.Add(newUserSavedPost);
-
-			post.SaveCount++;
-
-			_context.Posts.Update(post);
-
-			await _context.SaveChangesAsync();
-
-			return Response<List<PostModel>>.Success("Post saved!", 200);
 		}
 
 		/// <summary>

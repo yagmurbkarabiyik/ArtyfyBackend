@@ -24,7 +24,7 @@ namespace ArtyfyBackend.API.Controllers
         }
 
         [HttpPost("create")]
-		public async Task<IActionResult> CreatePost([FromBody] PostModel model)
+		public async Task<IActionResult> CreatePost([FromBody] PostCreateModel model)
 		{
 			return CreateActionResult(await _postService.Create(model));
 		}

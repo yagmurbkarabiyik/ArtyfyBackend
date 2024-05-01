@@ -8,7 +8,7 @@ namespace ArtyfyBackend.Core.IServices
 {
 	public interface IPostService
 	{
-		Task<Response<NoDataModel>> Create(PostModel model);
+		Task<Response<NoDataModel>> Create(PostCreateModel model);
 		Task<Response<PostModel>> LikePost(int postId, string userId);
 		Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId);
 		Task<Response<List<PostModel>>> ListSellableProduct();
