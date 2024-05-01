@@ -277,7 +277,7 @@ ServiceFabricBackup/
 
 # Microsoft Fakes
 FakesAssemblies/
-
+**/appsettings.json
 # GhostDoc plugin setting file
 *.GhostDoc.xml
 
