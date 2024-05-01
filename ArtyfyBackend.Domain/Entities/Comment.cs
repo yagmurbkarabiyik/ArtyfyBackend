@@ -9,7 +9,6 @@
         /// </summary>
         public string UserAppId { get; set; } = null!;
         public UserApp? UserApp { get; set; }
-        public ICollection<SubComment> SubComments { get; set; } = new List<SubComment>();
         public Post Post { get; set; } = null!;
         public int PostId { get; set; }
     }

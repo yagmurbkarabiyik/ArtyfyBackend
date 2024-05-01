@@ -15,7 +15,6 @@ namespace ArtyfyBackend.API.Controllers
 			_postService = postService;
 		}
 
-
         [HttpGet("getAll")]
         public async Task<IActionResult> GetAll()
         {

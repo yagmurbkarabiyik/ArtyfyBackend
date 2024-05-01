@@ -1,5 +1,6 @@
 ﻿using ArtyfyBackend.Core.IRepositories;
 using ArtyfyBackend.Core.IServices;
+using ArtyfyBackend.Core.Models.Comment;
 using ArtyfyBackend.Core.Models.Common;
 using ArtyfyBackend.Core.Models.Notification;
 using ArtyfyBackend.Core.Models.Post;
@@ -21,10 +22,11 @@ namespace ArtyfyBackend.Bll.Services
 		private readonly IPostRepository _postRepository;
 		private readonly IUserLikedPostRepository _userLikedPostRepository;
 		private readonly IUserSavedPostRepository _userSavedPostRepository;
+		private readonly ICommentRepository _commentRepository;
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly ArtyfyBackendDbContext _context;
 		private readonly IMapper _mapper;
-		public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper, IUserLikedPostRepository userLikedPostRepository, IUserSavedPostRepository userSavedPostRepository)
+		public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper, IUserLikedPostRepository userLikedPostRepository, IUserSavedPostRepository userSavedPostRepository, ICommentRepository commentRepository)
 		{
 			_userManager = userManager;
 			_postRepository = postRepository;
@@ -33,16 +35,35 @@ namespace ArtyfyBackend.Bll.Services
 			_mapper = mapper;
 			_userLikedPostRepository = userLikedPostRepository;
 			_userSavedPostRepository = userSavedPostRepository;
+			_commentRepository = commentRepository;
 		}
 
 		/// <summary>
 		/// This method lists all posts
 		/// </summary>
-		public async Task<Response<List<Post>>> GetAll()
+		public async Task<Response<List<GetPostModel>>> GetAll()
 		{
-			var posts = await _context.Posts.ToListAsync();
+			var postList = await _postRepository
+				.Queryable()
+				.Include(x => x.Comments)
+				.Select(x => new GetPostModel()
+				{
+					Title = x.Title,
+					Content = x.Content,
+					Image = x.Image,
+					LikeCount = x.LikeCount,
+					SaveCount = x.SaveCount,
+					IsSellable = x.IsSellable,
+					UserFullName = x.UserApp.FullName,
+					CategoryName = x.Category.Name,
+					Comments = x.Comments.Select(y => new GetCommentModel()
+					{
+						Content = y.Content,
+						UserFullName = y.UserApp.FullName
+					}).ToList()
+				}).ToListAsync();
 
-			return Response<List<Post>>.Success(posts, 200);
+			return Response<List<GetPostModel>>.Success(postList, 200);
 		}
 
 		/// <summary>
@@ -90,11 +111,35 @@ namespace ArtyfyBackend.Bll.Services
 		/// <param name="postId"></param>
 		/// <returns></returns>
 		/// <exception cref="NotImplementedException"></exception>
-		public async Task<Response<Post>> PostDetail(int postId)
+		public async Task<Response<GetPostModel>> PostDetail(int postId)
 		{
-			var post = await _context.Posts.FirstOrDefaultAsync(x => x.Id == postId);
+			var post = await _postRepository
+				.Queryable()
+				.Include(x => x.Comments)
+				.Where(x => x.Id == postId)
+				.Select(x => new GetPostModel()
+				{
+					Title = x.Title,
+					Content = x.Content,
+					Image = x.Image,
+					LikeCount = x.LikeCount,
+					SaveCount = x.SaveCount,
+					IsSellable = x.IsSellable,
+					UserFullName = x.UserApp.FullName,
+					CategoryName = x.Category.Name,
+					Comments = x.Comments.Select(y => new GetCommentModel()
+					{
+						Content = y.Content,
+						UserFullName = y.UserApp.FullName
+					}).ToList()
+				}).FirstOrDefaultAsync();
 
-			return Response<Post>.Success(post, 200);
+			if (post is null)
+			{
+				return Response<GetPostModel>.Fail("Post not found", 404, true);
+			}
+
+			return Response<GetPostModel>.Success(post, 200);
 		}
 
 		/// <summary>
@@ -117,7 +162,7 @@ namespace ArtyfyBackend.Bll.Services
 					PostId = postId
 				};
 
-				_userLikedPostRepository.AddAsync(newUserLikedPost);
+				await _userLikedPostRepository.AddAsync(newUserLikedPost);
 
 				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
 				if (post != null)
@@ -131,6 +176,9 @@ namespace ArtyfyBackend.Bll.Services
 				var likedPost = await _userLikedPostRepository
 					.Queryable()
 					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
+
+				if (likedPost is null)
+					return Response<PostModel>.Fail("User like not found", 404, true);
 
 				_userLikedPostRepository.Remove(likedPost);
 
@@ -152,7 +200,7 @@ namespace ArtyfyBackend.Bll.Services
 		/// </summary>
 		/// <param name="postId"></param>
 		/// <param name="userId"></param>
-		public async Task<Response<List<PostModel>>> SavePost(int postId, string userId)
+		public async Task<Response<PostModel>> SavePost(int postId, string userId)
 		{
 			var isPostSaved = await _userSavedPostRepository
 				.Queryable()
@@ -166,7 +214,7 @@ namespace ArtyfyBackend.Bll.Services
 					PostId = postId
 				};
 
-				_userSavedPostRepository.AddAsync(newUserSavedPost);
+				await _userSavedPostRepository.AddAsync(newUserSavedPost);
 
 				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
 				if (post != null)
@@ -181,6 +229,9 @@ namespace ArtyfyBackend.Bll.Services
 					.Queryable()
 					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
 
+				if (savedPost is null)
+					return Response<PostModel>.Fail("User saved not found", 404, true);
+
 				_userSavedPostRepository.Remove(savedPost);
 
 				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
@@ -192,37 +243,7 @@ namespace ArtyfyBackend.Bll.Services
 			}
 			await _context.SaveChangesAsync();
 
-			return Response<List<PostModel>>.Success("Post saved!", 200);
-
-			//var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-			//if (user == null)
-			//	return Response<List<PostModel>>.Fail("User not found!", 404, false);
-
-			//var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-			//if (post == null)
-			//	return Response<List<PostModel>>.Fail("Post not found!", 404, false);
-
-			//var existingUserSavedPost = await _context.UserSavedPosts
-			//	.FirstOrDefaultAsync(up => up.UserAppId == userId && up.PostId == postId);
-
-			//if (existingUserSavedPost != null)
-			//	return Response<List<PostModel>>.Fail("Post already saved by the user!", 400, false);
-
-			//var newUserSavedPost = new UserSavedPost
-			//{
-			//	UserAppId = userId,
-			//	PostId = postId
-			//};
-
-			//_context.UserSavedPosts.Add(newUserSavedPost);
-
-			//post.SaveCount++;
-
-			//_context.Posts.Update(post);
-
-			//await _context.SaveChangesAsync();
-
-			//return Response<List<PostModel>>.Success("Post saved!", 200);
+			return Response<PostModel>.Success("Post saved!", 200);
 		}
 
 		/// <summary>
@@ -309,11 +330,20 @@ namespace ArtyfyBackend.Bll.Services
 					NotificationType = NotificationType.Save
 				}).ToListAsync();
 
+			List<NotificationModel> userComments = await _commentRepository
+				.Queryable()
+				.Where(x => userPostIds.Contains(x.PostId))
+				.Select(x => new NotificationModel
+				{
+					UserId = x.UserAppId,
+					UserFullName = x.UserApp.FullName,
+					ImageUrl = x.UserApp.ImageUrl,
+					NotificationType = NotificationType.Comment
+				}).ToListAsync();
 
-			var combinedNotifications = userLikedPosts.Concat(userSavedPosts).ToList();
+			var combinedNotifications = userLikedPosts.Concat(userSavedPosts).Concat(userComments).ToList();
 
 			return combinedNotifications;
 		}
 	}
 }
-//todo save/like already saved/liked check problem

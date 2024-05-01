@@ -12,9 +12,9 @@ namespace ArtyfyBackend.Core.IServices
 		Task<Response<PostModel>> LikePost(int postId, string userId);
 		Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId);
 		Task<Response<List<PostModel>>> ListSellableProduct();
-		Task<Response<List<Post>>> GetAll();
-		Task<Response<Post>> PostDetail(int postId);
-		Task<Response<List<PostModel>>> SavePost(int postId, string userId);
+		Task<Response<List<GetPostModel>>> GetAll();
+		Task<Response<GetPostModel>> PostDetail(int postId);
+		Task<Response<PostModel>> SavePost(int postId, string userId);
 		Task<Response<List<UserSavedPost>>> GetSavedPost(string userId);
 		Task<Response<List<UserLikedPost>>> GetLikedPost(string userId);
 		Task<Response<List<Post>>> TrendPosts();

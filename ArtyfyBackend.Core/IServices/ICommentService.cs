@@ -7,6 +7,5 @@ namespace ArtyfyBackend.Core.IServices
 {
     public interface ICommentService : IGenericService<Comment, CommentModel>
     {
-      Task<Response<List<CommentWithSubCommentModel>>> GetCommentsWithSubCommentsAsync();
     }
 }
