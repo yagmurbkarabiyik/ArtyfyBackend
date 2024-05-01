@@ -2,13 +2,15 @@
 {
     public class Comment : BaseEntity
     {
-        public string Content { get; set; }
+        public string Content { get; set; } = null!;
 
         /// <summary>
         /// Relations
         /// </summary>
-        public string UserId { get; set; }
+        public string UserAppId { get; set; } = null!;
         public UserApp? UserApp { get; set; }
-        public ICollection<SubComment> SubComments { get; set; }
+        public ICollection<SubComment> SubComments { get; set; } = new List<SubComment>();
+        public Post Post { get; set; } = null!;
+        public int PostId { get; set; }
     }
 }

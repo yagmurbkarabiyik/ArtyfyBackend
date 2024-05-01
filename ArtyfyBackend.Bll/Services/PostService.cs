@@ -1,11 +1,14 @@
-﻿using ArtyfyBackend.Core.IServices;
+﻿using ArtyfyBackend.Core.IRepositories;
+using ArtyfyBackend.Core.IServices;
 using ArtyfyBackend.Core.Models.Common;
+using ArtyfyBackend.Core.Models.Notification;
 using ArtyfyBackend.Core.Models.Post;
 using ArtyfyBackend.Core.Repositories;
 using ArtyfyBackend.Core.Responses;
 using ArtyfyBackend.Core.UnitOfWork;
 using ArtyfyBackend.Dal.Context;
 using ArtyfyBackend.Domain.Entities;
+using ArtyfyBackend.Domain.Enums;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,16 +19,20 @@ namespace ArtyfyBackend.Bll.Services
 	{
 		private readonly UserManager<UserApp> _userManager;
 		private readonly IPostRepository _postRepository;
+		private readonly IUserLikedPostRepository _userLikedPostRepository;
+		private readonly IUserSavedPostRepository _userSavedPostRepository;
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly ArtyfyBackendDbContext _context;
 		private readonly IMapper _mapper;
-		public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper)
+		public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper, IUserLikedPostRepository userLikedPostRepository, IUserSavedPostRepository userSavedPostRepository)
 		{
 			_userManager = userManager;
 			_postRepository = postRepository;
 			_unitOfWork = unitOfWork;
 			_context = context;
 			_mapper = mapper;
+			_userLikedPostRepository = userLikedPostRepository;
+			_userSavedPostRepository = userSavedPostRepository;
 		}
 
 		/// <summary>
@@ -208,10 +215,51 @@ namespace ArtyfyBackend.Bll.Services
 		public async Task<Response<List<Post>>> TrendPosts()
 		{
 			var trendingPosts = await _context.Posts
-		   .OrderByDescending(p => p.LikeCount)
-		   .ToListAsync();
+			   .OrderByDescending(p => p.LikeCount)
+			   .ToListAsync();
 
 			return Response<List<Post>>.Success(trendingPosts, 200);
+		}
+
+		/// <summary>
+		/// This method returns us a detailed notification of the interaction between the post and the users. For example, this post was liked by user x, commented on by user x, or saved by user x.
+		/// </summary>
+		/// <param name="userAppId"></param>
+		/// <returns></returns>
+		public async Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId)
+		{
+			List<int> userPostIds = await _postRepository
+				.Queryable()
+				.Where(x => x.UserAppId == userAppId)
+				.Select(x => x.Id)
+				.ToListAsync();
+
+			List<NotificationModel> userLikedPosts = await _userLikedPostRepository
+				.Queryable()
+				.Where(x => userPostIds.Contains(x.PostId))
+				.Select(x => new NotificationModel
+				{
+					UserId = x.UserAppId,
+					UserFullName = x.UserApp.FullName,
+					ImageUrl = x.UserApp.ImageUrl,
+					NotificationType = NotificationType.Like
+				}).ToListAsync();
+
+			List<NotificationModel> userSavedPosts = await _userSavedPostRepository
+				.Queryable()
+				.Where(x => userPostIds.Contains(x.PostId))
+				.Select(x => new NotificationModel
+				{
+					UserId = x.UserAppId,
+					UserFullName = x.UserApp.FullName,
+					ImageUrl = x.UserApp.ImageUrl,
+					NotificationType = NotificationType.Save
+				}).ToListAsync();
+
+
+			var combinedNotifications = userLikedPosts.Concat(userSavedPosts).ToList();
+
+			return combinedNotifications;
 		}
 	}
 }

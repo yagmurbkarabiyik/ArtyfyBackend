@@ -16,7 +16,8 @@ namespace ArtyfyBackend.Domain.Entities
         /// </summary>
         public List<Post> Posts { get; set; }
         public List<Comment> Comments { get; set; }
-    }
+		public ICollection<UserLikedPost> UserLikedPosts { get; set; } = new List<UserLikedPost>(); //empty list
+	}
 }
 
 //todo name/surname, user name will be added

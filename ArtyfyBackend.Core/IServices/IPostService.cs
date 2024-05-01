@@ -1,4 +1,5 @@
 ﻿using ArtyfyBackend.Core.Models.Common;
+using ArtyfyBackend.Core.Models.Notification;
 using ArtyfyBackend.Core.Models.Post;
 using ArtyfyBackend.Core.Responses;
 using ArtyfyBackend.Domain.Entities;
@@ -9,6 +10,7 @@ namespace ArtyfyBackend.Core.IServices
 	{
 		Task<Response<NoDataModel>> Create(PostModel model);
 		Task<Response<PostModel>> LikePost(int postId, string userId);
+		Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId);
 		Task<Response<List<PostModel>>> ListSellableProduct();
 		Task<Response<List<Post>>> GetAll();
 		Task<Response<Post>> PostDetail(int postId);

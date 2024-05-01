@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtyfyBackend.Dal.Migrations
 {
     [DbContext(typeof(ArtyfyBackendDbContext))]
-    [Migration("20240401061008_PostUpdated")]
-    partial class PostUpdated
+    [Migration("20240501123938_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -63,6 +63,9 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
@@ -74,6 +77,8 @@ namespace ArtyfyBackend.Dal.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PostId");
 
                     b.HasIndex("UserAppId");
 
@@ -173,7 +178,7 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("PostId")
+                    b.Property<int>("PostId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -203,7 +208,7 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("PostId")
+                    b.Property<int>("PostId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -457,24 +462,36 @@ namespace ArtyfyBackend.Dal.Migrations
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
                 {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Comments")
                         .HasForeignKey("UserAppId");
+
+                    b.Navigation("Post");
 
                     b.Navigation("UserApp");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
                 {
-                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", null)
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Category", "Category")
                         .WithMany("Posts")
                         .HasForeignKey("CategoryId");
 
-                    b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", null)
+                    b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Posts")
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("UserApp");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
@@ -491,11 +508,13 @@ namespace ArtyfyBackend.Dal.Migrations
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
                 {
                     b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId");
+                        .WithMany("UserLikedPosts")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
-                        .WithMany()
+                        .WithMany("UserLikedPosts")
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -508,8 +527,10 @@ namespace ArtyfyBackend.Dal.Migrations
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserSavedPost", b =>
                 {
                     b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId");
+                        .WithMany("UserSavedPosts")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany()
@@ -583,11 +604,22 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Navigation("SubComments");
                 });
 
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("UserLikedPosts");
+
+                    b.Navigation("UserSavedPosts");
+                });
+
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserApp", b =>
                 {
                     b.Navigation("Comments");
 
                     b.Navigation("Posts");
+
+                    b.Navigation("UserLikedPosts");
                 });
 #pragma warning restore 612, 618
         }
