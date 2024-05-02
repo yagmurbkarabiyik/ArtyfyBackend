@@ -9,7 +9,6 @@ namespace ArtyfyBackend.API.Controllers
 	public class PostsController : BaseController
 	{
 		private readonly IPostService _postService;
-
 		public PostsController(IPostService postService)
 		{
 			_postService = postService;
@@ -35,7 +34,7 @@ namespace ArtyfyBackend.API.Controllers
 			return CreateActionResult(response);	
 		}
 
-		[HttpGet("like")]
+		[HttpPost("like")]
 		public async Task<IActionResult> Like(int postId, string userId)
 		{
 			var response = await _postService.LikePost(postId, userId);
@@ -49,7 +48,7 @@ namespace ArtyfyBackend.API.Controllers
             return CreateActionResult(await _postService.ListSellableProduct());
         }
 
-		[HttpGet("save")]
+		[HttpPost("save")]
 		public async Task<IActionResult> Save(int postId, string userId)
 		{
 			var response = await _postService.SavePost(postId, userId);
