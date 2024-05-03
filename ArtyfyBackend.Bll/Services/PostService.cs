@@ -46,14 +46,17 @@ namespace ArtyfyBackend.Bll.Services
 			var postList = await _postRepository
 				.Queryable()
 				.Include(x => x.Comments)
+				.Include(y => y.UserLikedPosts)
 				.Select(x => new GetPostModel()
 				{
 					Title = x.Title,
 					Content = x.Content,
 					Image = x.Image,
 					LikeCount = x.LikeCount,
+					IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
 					SaveCount = x.SaveCount,
-					IsSellable = x.IsSellable,
+                    IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
+                    IsSellable = x.IsSellable,
 					UserFullName = x.UserApp.FullName,
 					CategoryName = x.Category.Name,
 					Comments = x.Comments.Select(y => new GetCommentModel()
