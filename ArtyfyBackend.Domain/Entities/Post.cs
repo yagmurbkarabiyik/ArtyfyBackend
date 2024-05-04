@@ -19,5 +19,6 @@
 		public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public ICollection<UserLikedPost> UserLikedPosts { get; set; } = new List<UserLikedPost>();	//empty list
         public ICollection<UserSavedPost> UserSavedPosts { get; set; } = new List<UserSavedPost>();	
+        public ICollection<UserPostImage> UserPostImages { get; set; } = new List<UserPostImage>();	
     }
 }

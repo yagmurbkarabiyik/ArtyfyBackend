@@ -67,11 +67,8 @@ namespace ArtyfyBackend.Dal.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserAppId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -132,38 +129,6 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.ToTable("SubComments");
-                });
-
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
                 {
                     b.Property<int>("Id")
@@ -192,6 +157,40 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.HasIndex("UserAppId");
 
                     b.ToTable("UserLikedPosts");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserPostImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAppId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserAppId");
+
+                    b.ToTable("PostImages");
                 });
 
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserSavedPost", b =>
@@ -462,12 +461,14 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("Comments")
-                        .HasForeignKey("UserAppId");
+                        .HasForeignKey("UserAppId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Post");
 
@@ -491,17 +492,6 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Navigation("UserApp");
                 });
 
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.SubComment", b =>
-                {
-                    b.HasOne("ArtyfyBackend.Domain.Entities.Comment", "Comment")
-                        .WithMany("SubComments")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-                });
-
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserLikedPost", b =>
                 {
                     b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
@@ -512,6 +502,25 @@ namespace ArtyfyBackend.Dal.Migrations
 
                     b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
                         .WithMany("UserLikedPosts")
+                        .HasForeignKey("UserAppId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("UserApp");
+                });
+
+            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.UserPostImage", b =>
+                {
+                    b.HasOne("ArtyfyBackend.Domain.Entities.Post", "Post")
+                        .WithMany("UserPostImages")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ArtyfyBackend.Domain.Entities.UserApp", "UserApp")
+                        .WithMany()
                         .HasForeignKey("UserAppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -596,16 +605,13 @@ namespace ArtyfyBackend.Dal.Migrations
                     b.Navigation("Posts");
                 });
 
-            modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Comment", b =>
-                {
-                    b.Navigation("SubComments");
-                });
-
             modelBuilder.Entity("ArtyfyBackend.Domain.Entities.Post", b =>
                 {
                     b.Navigation("Comments");
 
                     b.Navigation("UserLikedPosts");
+
+                    b.Navigation("UserPostImages");
 
                     b.Navigation("UserSavedPosts");
                 });

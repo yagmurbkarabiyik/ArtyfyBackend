@@ -47,23 +47,26 @@ namespace ArtyfyBackend.Bll.Services
 				.Queryable()
 				.Include(x => x.Comments)
 				.Include(y => y.UserLikedPosts)
+				.Include(z => z.UserPostImages)
 				.Select(x => new GetPostModel()
 				{
 					Title = x.Title,
 					Content = x.Content,
-					Image = x.Image,
 					LikeCount = x.LikeCount,
 					IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
 					SaveCount = x.SaveCount,
                     IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
                     IsSellable = x.IsSellable,
 					UserFullName = x.UserApp.FullName,
+					UserName = x.UserApp.UserName,
 					CategoryName = x.Category.Name,
-					Comments = x.Comments.Select(y => new GetCommentModel()
+                    Comments = x.Comments.Select(y => new GetCommentModel()
 					{
-						Content = y.Content,
-						UserFullName = y.UserApp.FullName
-					}).ToList()
+						Title = y.UserApp.FullName,
+						Subtitle = y.Content,
+						Avatar = y.UserApp.ImageUrl
+					}).ToList(),
+					Images = x.UserPostImages.Select(x => x.ImageUrl).ToList(),
 				}).ToListAsync();
 
 			return Response<List<GetPostModel>>.Success(postList, 200);
@@ -89,13 +92,16 @@ namespace ArtyfyBackend.Bll.Services
 				{
 					Title = model.Title,
 					Content = model.Content,
-					Image = model.Image ?? "",
 					IsSellable = model.IsSellable,
 					UserAppId = model.AppUserId,
 					CategoryId = model.CategoryId,
-					CreatedDate = DateTime.Now
+					CreatedDate = DateTime.Now,
+					UserPostImages = model.Images.Select(x => new UserPostImage()
+					{
+						ImageUrl = x
+					}).ToList()
 				};
-
+			
 				await _postRepository.AddAsync(post);
 
 				await _unitOfWork.CommitAsync();
@@ -119,12 +125,12 @@ namespace ArtyfyBackend.Bll.Services
 			var post = await _postRepository
 				.Queryable()
 				.Include(x => x.Comments)
+				.Include(y => y.UserPostImages)
 				.Where(x => x.Id == postId)
 				.Select(x => new GetPostModel()
 				{
 					Title = x.Title,
 					Content = x.Content,
-					Image = x.Image,
 					LikeCount = x.LikeCount,
 					SaveCount = x.SaveCount,
 					IsSellable = x.IsSellable,
@@ -132,9 +138,10 @@ namespace ArtyfyBackend.Bll.Services
 					CategoryName = x.Category.Name,
 					Comments = x.Comments.Select(y => new GetCommentModel()
 					{
-						Content = y.Content,
-						UserFullName = y.UserApp.FullName
-					}).ToList()
+						Title = y.UserApp.FullName,
+						Subtitle = y.Content,
+					}).ToList(),
+					Images = x.UserPostImages.Select(y => y.ImageUrl).ToList()
 				}).FirstOrDefaultAsync();
 
 			if (post is null)

@@ -19,12 +19,6 @@ namespace ArtyfyBackend.Bll.Services
         {
             _commentRepository = commentRepository;
         }
-
-        /// <summary>
-        /// This method returns comments with sub comments.
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
     }
 }
 //todo createdDate problem
