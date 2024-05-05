@@ -13,347 +13,361 @@ using ArtyfyBackend.Domain.Enums;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace ArtyfyBackend.Bll.Services
 {
-	public class PostService : IPostService
-	{
-		private readonly UserManager<UserApp> _userManager;
-		private readonly IPostRepository _postRepository;
-		private readonly IUserLikedPostRepository _userLikedPostRepository;
-		private readonly IUserSavedPostRepository _userSavedPostRepository;
-		private readonly ICommentRepository _commentRepository;
-		private readonly IUnitOfWork _unitOfWork;
-		private readonly ArtyfyBackendDbContext _context;
-		private readonly IMapper _mapper;
-		public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper, IUserLikedPostRepository userLikedPostRepository, IUserSavedPostRepository userSavedPostRepository, ICommentRepository commentRepository)
-		{
-			_userManager = userManager;
-			_postRepository = postRepository;
-			_unitOfWork = unitOfWork;
-			_context = context;
-			_mapper = mapper;
-			_userLikedPostRepository = userLikedPostRepository;
-			_userSavedPostRepository = userSavedPostRepository;
-			_commentRepository = commentRepository;
-		}
+    public class PostService : IPostService
+    {
+        private readonly UserManager<UserApp> _userManager;
+        private readonly IPostRepository _postRepository;
+        private readonly IUserLikedPostRepository _userLikedPostRepository;
+        private readonly IUserSavedPostRepository _userSavedPostRepository;
+        private readonly ICommentRepository _commentRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ArtyfyBackendDbContext _context;
+        private readonly IMapper _mapper;
+        private string? _baseImageUrl;
+        public PostService(UserManager<UserApp> userManager, IPostRepository postRepository, IUnitOfWork unitOfWork, ArtyfyBackendDbContext context, IMapper mapper, IUserLikedPostRepository userLikedPostRepository, IUserSavedPostRepository userSavedPostRepository, ICommentRepository commentRepository, IConfiguration configuration)
+        {
+            _userManager = userManager;
+            _postRepository = postRepository;
+            _unitOfWork = unitOfWork;
+            _context = context;
+            _mapper = mapper;
+            _userLikedPostRepository = userLikedPostRepository;
+            _userSavedPostRepository = userSavedPostRepository;
+            _commentRepository = commentRepository;
+            _baseImageUrl = configuration["BaseImageUrl"];
+        }
 
-		/// <summary>
-		/// This method lists all posts
-		/// </summary>
-		public async Task<Response<List<GetPostModel>>> GetAll()
-		{
-			var postList = await _postRepository
-				.Queryable()
-				.Include(x => x.Comments)
-				.Include(y => y.UserLikedPosts)
-				.Include(z => z.UserPostImages)
-				.Select(x => new GetPostModel()
-				{
-					Title = x.Title,
-					Content = x.Content,
-					LikeCount = x.LikeCount,
-					IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
-					SaveCount = x.SaveCount,
-                    IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == x.UserAppId && ul.PostId == x.Id),
+        /// <summary>
+        /// This method lists all posts
+        /// </summary>
+        public async Task<Response<List<GetPostModel>>> GetAll(string userAppId)
+        {
+            var postList = await _postRepository
+                .Queryable()
+                .Include(x => x.Comments)
+                .Include(y => y.UserLikedPosts)
+                .Include(z => z.UserPostImages)
+                .Select(x => new GetPostModel()
+                {
+                    Title = x.Title,
+                    Content = x.Content,
+                    LikeCount = x.LikeCount,
+                    IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
+                    SaveCount = x.SaveCount,
+                    IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
                     IsSellable = x.IsSellable,
-					UserFullName = x.UserApp.FullName,
-					UserName = x.UserApp.UserName,
-					CategoryName = x.Category.Name,
+                    UserFullName = x.UserApp.FullName,
+                    UserProfileImage = !string.IsNullOrEmpty(x.UserApp.ImageUrl) ? string.Concat(_baseImageUrl, x.UserApp.ImageUrl) : "",
+                    UserName = x.UserApp.UserName,
+                    CategoryName = x.Category.Name,
                     Comments = x.Comments.Select(y => new GetCommentModel()
-					{
-						Title = y.UserApp.FullName,
-						Subtitle = y.Content,
-						Avatar = y.UserApp.ImageUrl
-					}).ToList(),
-					Images = x.UserPostImages.Select(x => x.ImageUrl).ToList(),
-				}).ToListAsync();
+                    {
+                        PostId = y.PostId,
+                        Title = y.UserApp.FullName,
+                        Subtitle = y.Content,
+                        Avatar = y.UserApp.ImageUrl
+                    }).ToList(),
+                    Images = x.UserPostImages.Select(x => string.Concat(_baseImageUrl, x.ImageUrl)).ToList()
+                }).ToListAsync();
 
-			return Response<List<GetPostModel>>.Success(postList, 200);
-		}
+            return Response<List<GetPostModel>>.Success(postList, 200);
+        }
 
-		/// <summary>
-		/// This method used for create a post
-		/// </summary>
-		/// <param name="model"></param>
-		/// <returns></returns>
-		public async Task<Response<NoDataModel>> Create(PostCreateModel model)
-		{
-			try
-			{
-				var user = await _userManager.FindByIdAsync(model.AppUserId);
+        /// <summary>
+        /// This method used for create a post
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public async Task<Response<NoDataModel>> Create(PostCreateModel model)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(model.AppUserId);
 
-				if (user == null)
-				{
-					return Response<NoDataModel>.Fail("Kullanıcı bulunamadı!", 404, false);
-				}
+                if (user == null)
+                {
+                    return Response<NoDataModel>.Fail("Kullanıcı bulunamadı!", 404, false);
+                }
 
-				var post = new Post
-				{
-					Title = model.Title,
-					Content = model.Content,
-					IsSellable = model.IsSellable,
-					UserAppId = model.AppUserId,
-					CategoryId = model.CategoryId,
-					CreatedDate = DateTime.Now,
-					UserPostImages = model.Images.Select(x => new UserPostImage()
-					{
-						ImageUrl = x
-					}).ToList()
-				};
-			
-				await _postRepository.AddAsync(post);
+                var post = new Post
+                {
+                    Title = model.Title,
+                    Content = model.Content,
+                    IsSellable = model.IsSellable,
+                    UserAppId = model.AppUserId,
+                    CategoryId = model.CategoryId,
+                    CreatedDate = DateTime.Now,
+                    UserPostImages = model.Images.Select(x => new UserPostImage()
+                    {
+                        ImageUrl = x
+                    }).ToList()
+                };
 
-				await _unitOfWork.CommitAsync();
+                await _postRepository.AddAsync(post);
 
-				return Response<NoDataModel>.Success("Yeni gönderi oluşturuldu!", 200);
-			}
-			catch (Exception ex)
-			{
-				return Response<NoDataModel>.Fail($"Gönderi oluşturulurken bir hata oluştu: {ex.Message}", 500, false);
-			}
-		}
+                await _unitOfWork.CommitAsync();
 
-		/// <summary>
-		/// This method used for get post's detail
-		/// </summary>
-		/// <param name="postId"></param>
-		/// <returns></returns>
-		/// <exception cref="NotImplementedException"></exception>
-		public async Task<Response<GetPostModel>> PostDetail(int postId)
-		{
-			var post = await _postRepository
-				.Queryable()
-				.Include(x => x.Comments)
-				.Include(y => y.UserPostImages)
-				.Where(x => x.Id == postId)
-				.Select(x => new GetPostModel()
-				{
-					Title = x.Title,
-					Content = x.Content,
-					LikeCount = x.LikeCount,
-					SaveCount = x.SaveCount,
-					IsSellable = x.IsSellable,
-					UserFullName = x.UserApp.FullName,
-					CategoryName = x.Category.Name,
-					Comments = x.Comments.Select(y => new GetCommentModel()
-					{
-						Title = y.UserApp.FullName,
-						Subtitle = y.Content,
-					}).ToList(),
-					Images = x.UserPostImages.Select(y => y.ImageUrl).ToList()
-				}).FirstOrDefaultAsync();
+                return Response<NoDataModel>.Success("Yeni gönderi oluşturuldu!", 200);
+            }
+            catch (Exception ex)
+            {
+                return Response<NoDataModel>.Fail($"Gönderi oluşturulurken bir hata oluştu: {ex.Message}", 500, false);
+            }
+        }
 
-			if (post is null)
-			{
-				return Response<GetPostModel>.Fail("Post not found", 404, true);
-			}
+        /// <summary>
+        /// This method used for get post's detail
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<Response<GetPostModel>> PostDetail(int postId)
+        {
+            var post = await _postRepository
+                .Queryable()
+                .Include(x => x.Comments)
+                .Include(y => y.UserPostImages)
+                .Where(x => x.Id == postId)
+                .Select(x => new GetPostModel()
+                {
+                    Title = x.Title,
+                    Content = x.Content,
+                    LikeCount = x.LikeCount,
+                    SaveCount = x.SaveCount,
+                    IsSellable = x.IsSellable,
+                    UserFullName = x.UserApp.FullName,
+                    UserProfileImage = string.Concat(_baseImageUrl, x.UserApp.ImageUrl),
+                    CategoryName = x.Category.Name,
+                    Comments = x.Comments.Select(y => new GetCommentModel()
+                    {
+                        PostId = y.PostId,
+                        Title = y.UserApp.FullName,
+                        Subtitle = y.Content,
+                        Avatar = y.UserApp.ImageUrl
+                    }).ToList(),
+                    Images = x.UserPostImages.Select(x => string.Concat(_baseImageUrl, x.ImageUrl)).ToList()
+                }).FirstOrDefaultAsync();
 
-			return Response<GetPostModel>.Success(post, 200);
-		}
+            if (post is null)
+            {
+                return Response<GetPostModel>.Fail("Post not found", 404, true);
+            }
 
-		/// <summary>
-		/// Thist method used for like a post. A user can like a post only once
-		/// </summary>
-		/// <param name="postId"></param>
-		/// <param name="userId"></param>
-		/// <returns></returns>
-		public async Task<Response<PostModel>> LikePost(int postId, string userId)
-		{
-			var isPostLiked = await _userLikedPostRepository
-				.Queryable()
-				.AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
+            return Response<GetPostModel>.Success(post, 200);
+        }
 
-			if (!isPostLiked)
-			{
-				var newUserLikedPost = new UserLikedPost
-				{
-					UserAppId = userId,
-					PostId = postId
-				};
+        /// <summary>
+        /// Thist method used for like a post. A user can like a post only once
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<Response<PostModel>> LikePost(int postId, string userId)
+        {
+            var isPostLiked = await _userLikedPostRepository
+                .Queryable()
+                .AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-				await _userLikedPostRepository.AddAsync(newUserLikedPost);
+            if (!isPostLiked)
+            {
+                var newUserLikedPost = new UserLikedPost
+                {
+                    UserAppId = userId,
+                    PostId = postId
+                };
 
-				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-				if (post != null)
-				{
-					post.LikeCount++;
-					_context.Posts.Update(post);
-				}
-			}
-			else
-			{
-				var likedPost = await _userLikedPostRepository
-					.Queryable()
-					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
+                await _userLikedPostRepository.AddAsync(newUserLikedPost);
 
-				if (likedPost is null)
-					return Response<PostModel>.Fail("User like not found", 404, true);
+                var post = await _postRepository
+                    .Queryable()
+                    .FirstOrDefaultAsync(p => p.Id == postId);
 
-				_userLikedPostRepository.Remove(likedPost);
+                if (post != null)
+                {
+                    post.LikeCount++;
+                    _postRepository.Update(post);
+                }
+            }
+            else
+            {
+                var likedPost = await _userLikedPostRepository
+                    .Queryable()
+                    .FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-				if (post != null && post.LikeCount > 0)
-				{
-					post.LikeCount--;
-					_context.Posts.Update(post);
-				}
-			}
+                if (likedPost is null)
+                    return Response<PostModel>.Fail("User like not found", 404, true);
 
-			await _context.SaveChangesAsync();
+                _userLikedPostRepository.Remove(likedPost);
 
-			return Response<PostModel>.Success(200);
-		}
+                var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+                if (post != null && post.LikeCount > 0)
+                {
+                    post.LikeCount--;
+                    _context.Posts.Update(post);
+                }
+            }
 
-		/// <summary>
-		/// This method used for save post
-		/// </summary>
-		/// <param name="postId"></param>
-		/// <param name="userId"></param>
-		public async Task<Response<PostModel>> SavePost(int postId, string userId)
-		{
-			var isPostSaved = await _userSavedPostRepository
-				.Queryable()
-				.AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
+            await _context.SaveChangesAsync();
 
-			if (!isPostSaved)
-			{
-				var newUserSavedPost = new UserSavedPost
-				{
-					UserAppId = userId,
-					PostId = postId
-				};
+            return Response<PostModel>.Success(200);
+        }
 
-				await _userSavedPostRepository.AddAsync(newUserSavedPost);
+        /// <summary>
+        /// This method used for save post
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <param name="userId"></param>
+        public async Task<Response<PostModel>> SavePost(int postId, string userId)
+        {
+            var isPostSaved = await _userSavedPostRepository
+                .Queryable()
+                .AnyAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-				if (post != null)
-				{
-					post.SaveCount++;
-					_context.Posts.Update(post);
-				}
-			}
-			else
-			{
-				var savedPost = await _userSavedPostRepository
-					.Queryable()
-					.FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
+            if (!isPostSaved)
+            {
+                var newUserSavedPost = new UserSavedPost
+                {
+                    UserAppId = userId,
+                    PostId = postId
+                };
 
-				if (savedPost is null)
-					return Response<PostModel>.Fail("User saved not found", 404, true);
+                await _userSavedPostRepository.AddAsync(newUserSavedPost);
 
-				_userSavedPostRepository.Remove(savedPost);
+                var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+                if (post != null)
+                {
+                    post.SaveCount++;
+                    _context.Posts.Update(post);
+                }
+            }
+            else
+            {
+                var savedPost = await _userSavedPostRepository
+                    .Queryable()
+                    .FirstOrDefaultAsync(x => x.UserAppId == userId && x.PostId == postId);
 
-				var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
-				if (post != null && post.SaveCount > 0)
-				{
-					post.SaveCount--;
-					_context.Posts.Update(post);
-				}
-			}
-			await _context.SaveChangesAsync();
+                if (savedPost is null)
+                    return Response<PostModel>.Fail("User saved not found", 404, true);
 
-			return Response<PostModel>.Success("Post saved!", 200);
-		}
+                _userSavedPostRepository.Remove(savedPost);
 
-		/// <summary>
-		/// This method listed all sellable products which shared by a user as a post.
-		/// </summary>
-		public async Task<Response<List<PostModel>>> ListSellableProduct()
-		{
-			var sellableProducts = await _postRepository.GetSellableProductsAsync();
+                var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+                if (post != null && post.SaveCount > 0)
+                {
+                    post.SaveCount--;
+                    _context.Posts.Update(post);
+                }
+            }
+            await _context.SaveChangesAsync();
 
-			var products = _mapper.Map<List<PostModel>>(sellableProducts);
+            return Response<PostModel>.Success("Post saved!", 200);
+        }
 
-			return Response<List<PostModel>>.Success(products, 200);
-		}
+        /// <summary>
+        /// This method listed all sellable products which shared by a user as a post.
+        /// </summary>
+        public async Task<Response<List<PostModel>>> ListSellableProduct()
+        {
+            var sellableProducts = await _postRepository.GetSellableProductsAsync();
 
-		/// <summary>
-		/// This method listed saved posts by user
-		/// </summary>
-		/// <param name="userId"></param>
-		/// <returns></returns>
-		public async Task<Response<List<UserSavedPost>>> GetSavedPost(string userId)
-		{
-			var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
+            var products = _mapper.Map<List<PostModel>>(sellableProducts);
 
-			return Response<List<UserSavedPost>>.Success(posts, 200);
-		}
+            return Response<List<PostModel>>.Success(products, 200);
+        }
 
-		/// <summary>
-		/// This method listed liked posts by user
-		/// </summary>
-		/// <param name="userId"></param>
-		/// <returns></returns>
-		public async Task<Response<List<UserLikedPost>>> GetLikedPost(string userId)
-		{
-			var posts = await _context.UserLikedPosts.Where(x => x.UserAppId == userId).ToListAsync();
+        /// <summary>
+        /// This method listed saved posts by user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<Response<List<UserSavedPost>>> GetSavedPost(string userId)
+        {
+            var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
 
-			return Response<List<UserLikedPost>>.Success(posts, 200);
-		}
+            return Response<List<UserSavedPost>>.Success(posts, 200);
+        }
 
-		/// <summary>
-		/// This method used for trend page. It shows us post which have the most like count
-		/// </summary>
-		/// <returns></returns>
-		public async Task<Response<List<Post>>> TrendPosts()
-		{
-			var trendingPosts = await _context.Posts
-			   .OrderByDescending(p => p.LikeCount)
-			   .ToListAsync();
+        /// <summary>
+        /// This method listed liked posts by user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<Response<List<UserLikedPost>>> GetLikedPost(string userId)
+        {
+            var posts = await _context.UserLikedPosts.Where(x => x.UserAppId == userId).ToListAsync();
 
-			return Response<List<Post>>.Success(trendingPosts, 200);
-		}
+            return Response<List<UserLikedPost>>.Success(posts, 200);
+        }
 
-		/// <summary>
-		/// This method returns us a detailed notification of the interaction between the post and the users. For example, this post was liked by user x, commented on by user x, or saved by user x.
-		/// </summary>
-		/// <param name="userAppId"></param>
-		/// <returns></returns>
-		public async Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId)
-		{
-			List<int> userPostIds = await _postRepository
-				.Queryable()
-				.Where(x => x.UserAppId == userAppId)
-				.Select(x => x.Id)
-				.ToListAsync();
+        /// <summary>
+        /// This method used for trend page. It shows us post which have the most like count
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Response<List<Post>>> TrendPosts()
+        {
+            var trendingPosts = await _context.Posts
+               .OrderByDescending(p => p.LikeCount)
+               .ToListAsync();
 
-			List<NotificationModel> userLikedPosts = await _userLikedPostRepository
-				.Queryable()
-				.Where(x => userPostIds.Contains(x.PostId))
-				.Select(x => new NotificationModel
-				{
-					UserId = x.UserAppId,
-					UserFullName = x.UserApp.FullName,
-					ImageUrl = x.UserApp.ImageUrl,
-					NotificationType = NotificationType.Like
-				}).ToListAsync();
+            return Response<List<Post>>.Success(trendingPosts, 200);
+        }
 
-			List<NotificationModel> userSavedPosts = await _userSavedPostRepository
-				.Queryable()
-				.Where(x => userPostIds.Contains(x.PostId))
-				.Select(x => new NotificationModel
-				{
-					UserId = x.UserAppId,
-					UserFullName = x.UserApp.FullName,
-					ImageUrl = x.UserApp.ImageUrl,
-					NotificationType = NotificationType.Save
-				}).ToListAsync();
+        /// <summary>
+        /// This method returns us a detailed notification of the interaction between the post and the users. For example, this post was liked by user x, commented on by user x, or saved by user x.
+        /// </summary>
+        /// <param name="userAppId"></param>
+        /// <returns></returns>
+        public async Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId)
+        {
+            List<int> userPostIds = await _postRepository
+                .Queryable()
+                .Where(x => x.UserAppId == userAppId)
+                .Select(x => x.Id)
+                .ToListAsync();
 
-			List<NotificationModel> userComments = await _commentRepository
-				.Queryable()
-				.Where(x => userPostIds.Contains(x.PostId))
-				.Select(x => new NotificationModel
-				{
-					UserId = x.UserAppId,
-					UserFullName = x.UserApp.FullName,
-					ImageUrl = x.UserApp.ImageUrl,
-					NotificationType = NotificationType.Comment
-				}).ToListAsync();
+            List<NotificationModel> userLikedPosts = await _userLikedPostRepository
+                .Queryable()
+                .Where(x => userPostIds.Contains(x.PostId))
+                .Select(x => new NotificationModel
+                {
+                    UserId = x.UserAppId,
+                    PostId = x.PostId,
+                    UserFullName = x.UserApp.FullName,
+                    ImageUrl = x.UserApp.ImageUrl,
+                    NotificationType = NotificationType.Like
+                }).ToListAsync();
 
-			var combinedNotifications = userLikedPosts.Concat(userSavedPosts).Concat(userComments).ToList();
+            List<NotificationModel> userSavedPosts = await _userSavedPostRepository
+                .Queryable()
+                .Where(x => userPostIds.Contains(x.PostId))
+                .Select(x => new NotificationModel
+                {
+                    UserId = x.UserAppId,
+                    PostId = x.PostId,
+                    UserFullName = x.UserApp.FullName,
+                    ImageUrl = x.UserApp.ImageUrl,
+                    NotificationType = NotificationType.Save
+                }).ToListAsync();
 
-			return combinedNotifications;
-		}
-	}
+            List<NotificationModel> userComments = await _commentRepository
+                .Queryable()
+                .Where(x => userPostIds.Contains(x.PostId))
+                .Select(x => new NotificationModel
+                {
+                    UserId = x.UserAppId,
+                    PostId = x.PostId,
+                    UserFullName = x.UserApp.FullName,
+                    ImageUrl = x.UserApp.ImageUrl,
+                    NotificationType = NotificationType.Comment
+                }).ToListAsync();
+
+            var combinedNotifications = userLikedPosts.Concat(userSavedPosts).Concat(userComments).ToList();
+
+            return combinedNotifications;
+        }
+    }
 }

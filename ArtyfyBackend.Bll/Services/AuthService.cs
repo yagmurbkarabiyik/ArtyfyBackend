@@ -57,7 +57,8 @@ namespace ArtyfyBackend.Bll.Services
 				FullName = registerModel.FullName,
 				PhoneNumber = registerModel.PhoneNumber,
 				UserName = userName, 
-				VerificationCode = verificationCode
+				VerificationCode = verificationCode,
+				ImageUrl = registerModel.UserProfileImage
 			};
 
 			var result = await _userManager.CreateAsync(user, registerModel.Password);

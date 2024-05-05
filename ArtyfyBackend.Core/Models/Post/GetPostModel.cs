@@ -7,12 +7,13 @@ namespace ArtyfyBackend.Core.Models.Post
 		public string Title { get; set; } = null!;
 		public string Content { get; set; } = null!;
 		public List<string> Images { get; set; } = new List<string>();
-		public int? LikeCount { get; set; }
+        public int? LikeCount { get; set; }
         public bool IsLikeIt { get; set; }
         public int? SaveCount { get; set; }
         public bool IsSaveIt { get; set; }
         public bool IsSellable { get; set; }
         public string UserFullName { get; set; }
+        public string UserProfileImage { get; set; }
         public string UserName { get; set; }
         public string CategoryName { get; set; }
 		public List<GetCommentModel> Comments { get; set; }

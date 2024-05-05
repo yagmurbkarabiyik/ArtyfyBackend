@@ -15,9 +15,9 @@ namespace ArtyfyBackend.API.Controllers
 		}
 
         [HttpGet("getAll")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(string userAppId)
         {
-            var response = await _postService.GetAll();
+            var response = await _postService.GetAll(userAppId);
             return CreateActionResult(response);
         }
 

@@ -5,7 +5,8 @@ namespace ArtyfyBackend.Core.Models.Notification
 	public class NotificationModel
 	{
 		public string UserId { get; set; } = null!;
-		public string? UserFullName { get; set; }
+        public int PostId { get; set; } 
+        public string? UserFullName { get; set; }
         public string? ImageUrl { get; set; } 
 		public NotificationType NotificationType { get; set; } 
 	}

@@ -8,7 +8,7 @@ namespace ArtyfyBackend.Domain.Entities
         public string City { get; set; } = null!;
         public string? VerificationCode { get; set; }
         public DateTime? BirthDate { get; set; }
-        public string? ImageUrl { get; set; }
+        public string? ImageUrl { get; set; } //user profile image
         public string? ResetPasswordVerificationCode { get; set; }
 
         /// <summary>
