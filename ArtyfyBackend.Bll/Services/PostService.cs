@@ -48,12 +48,13 @@ namespace ArtyfyBackend.Bll.Services
         {
             var postList = await _postRepository
                 .Queryable()
-                .Include(x => x.Comments)
-                .Include(y => y.UserLikedPosts)
-                .Include(z => z.UserPostImages)
+                .Include(c => c.Comments)
+                .Include(ulp => ulp.UserLikedPosts)
+                .Include(up => up.UserPostImages)
                 .Select(x => new GetPostModel()
                 {
                     PostId = x.Id,
+                    Price = x.Price,
                     Title = x.Title,
                     Content = x.Content,
                     LikeCount = x.LikeCount,
@@ -96,6 +97,7 @@ namespace ArtyfyBackend.Bll.Services
 
                 var post = new Post
                 {
+                    Price = model.Price,
                     Title = model.Title,
                     Content = model.Content,
                     IsSellable = model.IsSellable,

@@ -2,7 +2,9 @@
 {
 	public class PostModel
 	{
-		public string Title { get; set; } = null!;
+        public int PostId { get; set; }
+        public decimal? Price { get; set; }
+        public string Title { get; set; } = null!;
 		public string Content { get; set; } = null!;
 		public string? Image { get; set; }
 		public int? LikeCount { get; set; }

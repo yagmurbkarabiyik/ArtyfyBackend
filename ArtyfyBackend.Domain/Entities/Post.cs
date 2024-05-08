@@ -7,6 +7,7 @@
 		public int LikeCount { get; set; }
 		public int SaveCount { get; set; }
 		public bool IsSellable { get; set; }
+        public decimal? Price { get; set; }
 
         /// <summary>
         /// Relations

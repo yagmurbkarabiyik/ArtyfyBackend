@@ -5,6 +5,7 @@ namespace ArtyfyBackend.Core.Models.Post
 	public class GetPostModel
 	{
         public int PostId { get; set; }
+        public decimal? Price { get; set; }
         public string Title { get; set; } = null!;
 		public string Content { get; set; } = null!;
 		public List<string> Images { get; set; } = new List<string>();

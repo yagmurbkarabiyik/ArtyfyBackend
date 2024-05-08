@@ -2,7 +2,8 @@
 {
 	public class PostCreateModel
 	{
-		public string Title { get; set; } = null!;
+        public decimal? Price { get; set; }
+        public string Title { get; set; } = null!;
 		public string Content { get; set; } = null!;
 		public List<string> Images { get; set; } = new List<string>();
 		public bool IsSellable { get; set; }
