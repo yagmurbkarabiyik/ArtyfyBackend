@@ -53,6 +53,7 @@ namespace ArtyfyBackend.Bll.Services
                 .Include(z => z.UserPostImages)
                 .Select(x => new GetPostModel()
                 {
+                    PostId = x.Id,
                     Title = x.Title,
                     Content = x.Content,
                     LikeCount = x.LikeCount,
@@ -134,6 +135,7 @@ namespace ArtyfyBackend.Bll.Services
                 .Where(x => x.Id == postId)
                 .Select(x => new GetPostModel()
                 {
+                    PostId = x.Id,
                     Title = x.Title,
                     Content = x.Content,
                     LikeCount = x.LikeCount,

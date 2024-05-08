@@ -4,7 +4,8 @@ namespace ArtyfyBackend.Core.Models.Post
 {
 	public class GetPostModel
 	{
-		public string Title { get; set; } = null!;
+        public int PostId { get; set; }
+        public string Title { get; set; } = null!;
 		public string Content { get; set; } = null!;
 		public List<string> Images { get; set; } = new List<string>();
         public int? LikeCount { get; set; }
