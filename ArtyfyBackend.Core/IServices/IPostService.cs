@@ -11,7 +11,7 @@ namespace ArtyfyBackend.Core.IServices
 		Task<Response<NoDataModel>> Create(PostCreateModel model);
 		Task<Response<PostModel>> LikePost(int postId, string userId);
 		Task<List<NotificationModel>> GetUserPostsNotifications(string userAppId);
-		Task<Response<List<PostModel>>> ListSellableProduct();
+		Task<Response<List<GetPostModel>>> ListSellableProduct(string userAppId);
 		Task<Response<List<GetPostModel>>> GetAll(string userAppId);
 		Task<Response<GetPostModel>> PostDetail(int postId);
 		Task<Response<PostModel>> SavePost(int postId, string userId);
