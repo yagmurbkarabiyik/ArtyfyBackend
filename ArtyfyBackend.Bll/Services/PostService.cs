@@ -64,6 +64,7 @@ namespace ArtyfyBackend.Bll.Services
                     IsSellable = x.IsSellable,
                     UserFullName = x.UserApp.FullName,
                     UserProfileImage = !string.IsNullOrEmpty(x.UserApp.ImageUrl) ? string.Concat(_baseImageUrl, x.UserApp.ImageUrl) : "",
+                    UserAppId = x.UserApp.Id,
                     UserName = x.UserApp.UserName,
                     CategoryName = x.Category.Name,
                     Comments = x.Comments.Select(y => new GetCommentModel()
@@ -74,7 +75,10 @@ namespace ArtyfyBackend.Bll.Services
                         Avatar = y.UserApp.ImageUrl
                     }).ToList(),
                     Images = x.UserPostImages.Select(x => string.Concat(_baseImageUrl, x.ImageUrl)).ToList()
-                }).ToListAsync();
+                })
+                .OrderByDescending(p => p.PostId)
+                .Take(20)
+                .ToListAsync();
 
             return Response<List<GetPostModel>>.Success(postList, 200);
         }
@@ -143,6 +147,7 @@ namespace ArtyfyBackend.Bll.Services
                     LikeCount = x.LikeCount,
                     SaveCount = x.SaveCount,
                     IsSellable = x.IsSellable,
+                    UserAppId = x.UserApp.Id,
                     UserFullName = x.UserApp.FullName,
                     UserProfileImage = string.Concat(_baseImageUrl, x.UserApp.ImageUrl),
                     CategoryName = x.Category.Name,
@@ -274,13 +279,44 @@ namespace ArtyfyBackend.Bll.Services
         /// <summary>
         /// This method listed all sellable products which shared by a user as a post.
         /// </summary>
-        public async Task<Response<List<PostModel>>> ListSellableProduct()
+        public async Task<Response<List<GetPostModel>>> ListSellableProduct(string userAppId)
         {
-            var sellableProducts = await _postRepository.GetSellableProductsAsync();
+            var postList = await _postRepository
+                .Queryable()
+                .Include(c => c.Comments)
+                .Include(ulp => ulp.UserLikedPosts)
+                .Include(up => up.UserPostImages)
+                .Where(p => p.IsSellable == true)
+                .Select(x => new GetPostModel()
+                {
+                    PostId = x.Id,
+                    Price = x.Price,
+                    Title = x.Title,
+                    Content = x.Content,
+                    LikeCount = x.LikeCount,
+                    IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
+                    SaveCount = x.SaveCount,
+                    IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
+                    IsSellable = x.IsSellable,
+                    UserFullName = x.UserApp.FullName,
+                    UserProfileImage = !string.IsNullOrEmpty(x.UserApp.ImageUrl) ? string.Concat(_baseImageUrl, x.UserApp.ImageUrl) : "",
+                    UserAppId = x.UserApp.Id,
+                    UserName = x.UserApp.UserName,
+                    CategoryName = x.Category.Name,
+                    Comments = x.Comments.Select(y => new GetCommentModel()
+                    {
+                        PostId = y.PostId,
+                        Title = y.UserApp.FullName,
+                        Subtitle = y.Content,
+                        Avatar = y.UserApp.ImageUrl
+                    }).ToList(),
+                    Images = x.UserPostImages.Select(x => string.Concat(_baseImageUrl, x.ImageUrl)).ToList()
+                })
+                .OrderByDescending(p => p.PostId)
+                .Take(20)
+                .ToListAsync();
 
-            var products = _mapper.Map<List<PostModel>>(sellableProducts);
-
-            return Response<List<PostModel>>.Success(products, 200);
+            return Response<List<GetPostModel>>.Success(postList, 200);
         }
 
         /// <summary>

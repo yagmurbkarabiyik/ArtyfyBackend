@@ -43,9 +43,9 @@ namespace ArtyfyBackend.API.Controllers
 		}
 
         [HttpGet("getSellableProducts")]
-        public async Task<IActionResult> GetSellableProducts()
+        public async Task<IActionResult> GetSellableProducts(string userAppId)
         {
-            return CreateActionResult(await _postService.ListSellableProduct());
+            return CreateActionResult(await _postService.ListSellableProduct(userAppId));
         }
 
 		[HttpPost("save")]

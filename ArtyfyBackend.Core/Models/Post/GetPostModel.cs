@@ -14,6 +14,7 @@ namespace ArtyfyBackend.Core.Models.Post
         public int? SaveCount { get; set; }
         public bool IsSaveIt { get; set; }
         public bool IsSellable { get; set; }
+        public string UserAppId { get; set; }
         public string UserFullName { get; set; }
         public string UserProfileImage { get; set; }
         public string UserName { get; set; }
