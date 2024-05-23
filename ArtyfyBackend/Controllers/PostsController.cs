@@ -73,9 +73,9 @@ namespace ArtyfyBackend.API.Controllers
         }
 
         [HttpGet("trendPosts")]
-		public async Task<IActionResult> TrendPosts()
+		public async Task<IActionResult> TrendPosts(string userAppId)
 		{
-			var response = await _postService.TrendPosts();	
+			var response = await _postService.TrendPosts(userAppId);	
 			return CreateActionResult(response);
 		}
     }

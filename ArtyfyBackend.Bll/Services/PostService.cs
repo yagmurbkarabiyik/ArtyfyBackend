@@ -347,14 +347,45 @@ namespace ArtyfyBackend.Bll.Services
         /// This method used for trend page. It shows us post which have the most like count
         /// </summary>
         /// <returns></returns>
-        public async Task<Response<List<Post>>> TrendPosts()
+        public async Task<Response<List<GetPostModel>>> TrendPosts(string userAppId)
         {
-            var trendingPosts = await _context.Posts
-               .OrderByDescending(p => p.LikeCount)
-               .ToListAsync();
-
-            return Response<List<Post>>.Success(trendingPosts, 200);
+            var postList = await _postRepository
+                .Queryable()
+                .Include(c => c.Comments)
+                .Include(ulp => ulp.UserLikedPosts)
+                .Include(up => up.UserPostImages)
+                .Select(x => new GetPostModel()
+                {
+                    PostId = x.Id,
+                    Price = x.Price,
+                    Title = x.Title,
+                    Content = x.Content,
+                    LikeCount = x.LikeCount,
+                    IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
+                    SaveCount = x.SaveCount,
+                    IsSaveIt = x.UserSavedPosts.Any(ul => ul.UserAppId == userAppId && ul.PostId == x.Id),
+                    IsSellable = x.IsSellable,
+                    UserFullName = x.UserApp.FullName,
+                    UserProfileImage = !string.IsNullOrEmpty(x.UserApp.ImageUrl)
+                        ? string.Concat(_baseImageUrl, x.UserApp.ImageUrl)
+                        : "",
+                    UserAppId = x.UserApp.Id,
+                    UserName = x.UserApp.UserName,
+                    CategoryName = x.Category.Name,
+                    Comments = x.Comments.Select(y => new GetCommentModel()
+                    {
+                        PostId = y.PostId,
+                        Title = y.UserApp.FullName,
+                        Subtitle = y.Content,
+                        Avatar = y.UserApp.ImageUrl
+                    }).ToList(),
+                    Images = x.UserPostImages.Select(x => string.Concat(_baseImageUrl, x.ImageUrl)).ToList()
+                }).OrderByDescending(x => x.LikeCount)
+                  .ToListAsync();
+            
+            return Response<List<GetPostModel>>.Success(postList, 200);
         }
+
 
         /// <summary>
         /// This method returns us a detailed notification of the interaction between the post and the users. For example, this post was liked by user x, commented on by user x, or saved by user x.
