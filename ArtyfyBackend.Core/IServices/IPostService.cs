@@ -15,7 +15,7 @@ namespace ArtyfyBackend.Core.IServices
 		Task<Response<List<GetPostModel>>> GetAll(string userAppId);
 		Task<Response<GetPostModel>> PostDetail(int postId);
 		Task<Response<PostModel>> SavePost(int postId, string userId);
-		Task<Response<List<UserSavedPost>>> GetSavedPost(string userId);
+		Task<Response<List<GetPostModel>>> GetSavedPost(string userId);
 		Task<Response<List<UserLikedPost>>> GetLikedPost(string userId);
 		Task<Response<List<GetPostModel>>> TrendPosts(string userAppId);
 	}

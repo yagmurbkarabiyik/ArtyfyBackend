@@ -324,12 +324,49 @@ namespace ArtyfyBackend.Bll.Services
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public async Task<Response<List<UserSavedPost>>> GetSavedPost(string userId)
+        public async Task<Response<List<GetPostModel>>> GetSavedPost(string userId)
         {
-            var posts = await _context.UserSavedPosts.Where(x => x.UserAppId == userId).ToListAsync();
+            var savedPostIds = await _context.UserSavedPosts
+                .Where(x => x.UserAppId == userId)
+                .Select(x => x.PostId)
+                .ToListAsync();
 
-            return Response<List<UserSavedPost>>.Success(posts, 200);
+            var postList = await _postRepository
+                .Queryable()
+                .Where(x => savedPostIds.Contains(x.Id))
+                .Include(c => c.Comments)
+                .Include(ulp => ulp.UserLikedPosts)
+                .Include(up => up.UserPostImages)
+                .Select(x => new GetPostModel()
+                {
+                    PostId = x.Id,
+                    Price = x.Price,
+                    Title = x.Title,
+                    Content = x.Content,
+                    LikeCount = x.LikeCount,
+                    IsLikeIt = x.UserLikedPosts.Any(ul => ul.UserAppId == userId && ul.PostId == x.Id),
+                    SaveCount = x.SaveCount,
+                    IsSaveIt = true, // Kullanıcının kaydettiği bir post olduğu için true olarak ayarlayabilirsiniz
+                    IsSellable = x.IsSellable,
+                    UserFullName = x.UserApp.FullName,
+                    UserProfileImage = !string.IsNullOrEmpty(x.UserApp.ImageUrl) ? string.Concat(_baseImageUrl, x.UserApp.ImageUrl) : "",
+                    UserAppId = x.UserApp.Id,
+                    UserName = x.UserApp.UserName,
+                    CategoryName = x.Category.Name,
+                    Comments = x.Comments.Select(y => new GetCommentModel()
+                    {
+                        PostId = y.PostId,
+                        Title = y.UserApp.FullName,
+                        Subtitle = y.Content,
+                        Avatar = y.UserApp.ImageUrl
+                    }).ToList(),
+                    Images = x.UserPostImages.Select(y => string.Concat(_baseImageUrl, y.ImageUrl)).ToList()
+                })
+                .ToListAsync();
+
+            return Response<List<GetPostModel>>.Success(postList, 200);
         }
+
 
         /// <summary>
         /// This method listed liked posts by user
