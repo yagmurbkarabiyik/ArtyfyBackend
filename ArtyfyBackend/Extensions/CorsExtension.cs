@@ -25,6 +25,10 @@ public static class CorsExtension
 					policy.WithOrigins("https://www.artyfy.com.tr") 
 						.AllowAnyHeader()
 						.AllowAnyMethod();
+					
+					policy.WithOrigins("https://artyfy-fe.vercel.app") 
+						.AllowAnyHeader()
+						.AllowAnyMethod();
 				});
 		});
 	}
